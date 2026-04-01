@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BingoZingo</title>
-  <link rel="stylesheet" href="startmenu.css?v=20260401-1159">
+  <link rel="stylesheet" href="startmenu.css?v=20260401-1359">
 </head>
 <!-- FIX 2: Removed hardcoded class="night-mode" — night mode is now
      applied by startmenu.js based on the saved localStorage preference,
@@ -28,6 +28,18 @@
     <p id="howItWorksHintFree" style="display:none;margin-top:8px;">In the app, buttons and labels with a small <span style="display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;background:rgba(160,180,210,0.7);color:#fff;font-size:6px;font-weight:700;vertical-align:middle;">?</span> indicator can be <strong>pressed and held</strong> for a quick explanation of that feature.</p>
     <p style="margin-top:8px;">Throughout the app, buttons and labels with a small <span style="display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;background:rgba(160,180,210,0.7);color:#fff;font-size:6px;font-weight:700;vertical-align:middle;">?</span> indicator can be <strong>pressed and held</strong> for a quick explanation of that feature.</p>
     <button class="help-dots-toggle" style="margin-top:4px;"></button>
+    <p class="how-play-along">
+      <span class="how-play-row">
+        <strong>Android:</strong> get the app from the
+        <a href="https://play.google.com/store/apps/details?id=com.jcat.bingozingo.free" target="_blank" rel="noopener">Play Store</a>
+        <button class="qr-btn" data-qr="help/images/bingozingoplayqr.png" aria-label="Show Play Store QR code">QR</button>
+      </span>
+      <span class="how-play-row">
+        <strong>iOS:</strong> play on the web at
+        <a href="https://bingozingo.thecrazycat.com/" target="_blank" rel="noopener">bingozingo.thecrazycat.com</a>
+        <button class="qr-btn" data-qr="help/images/bingozingoqr.png" aria-label="Show website QR code">QR</button>
+      </span>
+    </p>
   </div>
 </div>
 
@@ -51,14 +63,14 @@
 
 
 <!-- FIX 5: startmenu.js is now actually loaded -->
-<link rel="stylesheet" href="changelog-popup.css?v=20260401-1159">
-<link rel="stylesheet" href="help/help-popup.css?v=20260401-1159">
-<script src="help/help-popup.js?v=20260401-1159" defer></script>
-<script src="version.js?v=20260401-1159" defer></script>
-<script src="capacitor.js?v=20260401-1159" defer></script>
-<script src="back-handler.js?v=20260401-1159" defer></script>
-<script src="changelog.js?v=20260401-1159" defer></script>
-<script src="startmenu.js?v=20260401-1159" defer></script>
+<link rel="stylesheet" href="changelog-popup.css?v=20260401-1359">
+<link rel="stylesheet" href="help/help-popup.css?v=20260401-1359">
+<script src="help/help-popup.js?v=20260401-1359" defer></script>
+<script src="version.js?v=20260401-1359" defer></script>
+<script src="capacitor.js?v=20260401-1359" defer></script>
+<script src="back-handler.js?v=20260401-1359" defer></script>
+<script src="changelog.js?v=20260401-1359" defer></script>
+<script src="startmenu.js?v=20260401-1359" defer></script>
 
 <!-- FIX 7: Service worker registration failure shown in console — acceptable
      for a local game app. No user-visible error needed unless offline support

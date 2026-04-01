@@ -161,6 +161,48 @@ button:disabled {
   margin: 0;
 }
 
+.how-it-works-body a {
+  color: #7cb8f0;
+  text-decoration: none;
+}
+.how-it-works-body a:hover {
+  text-decoration: underline;
+}
+
+.how-play-along {
+  margin-top: 10px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.how-play-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  line-height: 1.6;
+}
+
+.qr-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  font-size: 11px;
+  background: #2a2a2a;
+  border: 1px solid #555;
+  color: #aaa;
+  border-radius: 5px;
+  cursor: pointer;
+  min-width: unset;
+  line-height: 1.6;
+  transition: background 0.15s;
+}
+.qr-btn:hover {
+  background: #3a3a3a;
+  color: #eee;
+}
+
 
 /* ============================= */
 /* 5. MENU ITEMS WITH SUBTITLES  */

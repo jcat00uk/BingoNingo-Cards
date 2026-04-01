@@ -289,7 +289,7 @@ input, textarea {
 
 /* Cell tap highlight animation */
 .card td.highlight {
-  background-color: gold;
+  background-color: var(--card-flash, gold);
   color: black;
   animation: highlightAnim 0.5s;
 }
