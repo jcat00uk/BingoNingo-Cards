@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BingoZingo</title>
-  <link rel="stylesheet" href="startmenu.css?v=20260401-1405">
+  <link rel="stylesheet" href="startmenu.css?v=.0.0">
 </head>
 <!-- FIX 2: Removed hardcoded class="night-mode" — night mode is now
      applied by startmenu.js based on the saved localStorage preference,
@@ -23,23 +23,30 @@
     ⓘ How it works <span class="how-arrow">▼</span>
   </button>
   <div class="how-it-works-body" id="howItWorksBody" hidden>
+
     <p id="howItWorksTextFull">One person opens <strong>Bingo Caller</strong> and runs the game. Other players open <strong>Player Cards</strong> on their phones and mark off numbers as they're called. Use <strong>Print Cards</strong> to generate PDF sheets to hand out.</p>
     <p id="howItWorksTextFree" style="display:none;">Open <strong>Player Cards</strong> on your phone and mark off numbers as the caller reads them out.</p>
-    <p id="howItWorksHintFree" style="display:none;margin-top:8px;">In the app, buttons and labels with a small <span style="display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;background:rgba(160,180,210,0.7);color:#fff;font-size:6px;font-weight:700;vertical-align:middle;">?</span> indicator can be <strong>pressed and held</strong> for a quick explanation of that feature.</p>
-    <p style="margin-top:8px;">Throughout the app, buttons and labels with a small <span style="display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;background:rgba(160,180,210,0.7);color:#fff;font-size:6px;font-weight:700;vertical-align:middle;">?</span> indicator can be <strong>pressed and held</strong> for a quick explanation of that feature.</p>
-    <button class="help-dots-toggle" style="margin-top:4px;"></button>
-    <p class="how-play-along">
-      <span class="how-play-row">
-        <strong>Android:</strong> get the app from the
-        <a href="https://play.google.com/store/apps/details?id=com.jcat.bingozingo.free" target="_blank" rel="noopener">Play Store</a>
+    <p id="howItWorksHintFree" style="display:none;margin-top:8px;">Buttons and labels with a small <span style="display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;background:rgba(160,180,210,0.7);color:#fff;font-size:6px;font-weight:700;vertical-align:middle;">?</span> indicator can be <strong>pressed and held</strong> for a quick explanation.</p>
+    <p style="margin-top:8px;">Throughout the app, buttons and labels with a small <span style="display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;background:rgba(160,180,210,0.7);color:#fff;font-size:6px;font-weight:700;vertical-align:middle;">?</span> indicator can be <strong>pressed and held</strong> for a quick explanation.</p>
+
+    <div class="how-play-along">
+      <div class="how-play-platform">
+        <strong>Android</strong><br>
+        Get the app from the<br>
+        <a href="https://play.google.com/store/apps/details?id=com.jcat.bingozingo.app.free" target="_blank" rel="noopener">Play Store</a>
         <button class="qr-btn" data-qr="help/images/bingozingoplayqr.png" aria-label="Show Play Store QR code">QR</button>
-      </span>
-      <span class="how-play-row">
-        <strong>iOS:</strong> play on the web at
+      </div>
+
+      <div class="how-play-platform">
+        <strong>iOS / Web</strong><br>
+        Play on the web at<br>
         <a href="https://bingozingo.thecrazycat.com/" target="_blank" rel="noopener">bingozingo.thecrazycat.com</a>
         <button class="qr-btn" data-qr="help/images/bingozingoqr.png" aria-label="Show website QR code">QR</button>
-      </span>
-    </p>
+      </div>
+    </div>
+
+    <button class="help-dots-toggle" style="margin-top:8px;"></button>
+
   </div>
 </div>
 
@@ -63,14 +70,14 @@
 
 
 <!-- FIX 5: startmenu.js is now actually loaded -->
-<link rel="stylesheet" href="changelog-popup.css?v=20260401-1405">
-<link rel="stylesheet" href="help/help-popup.css?v=20260401-1405">
-<script src="help/help-popup.js?v=20260401-1405" defer></script>
-<script src="version.js?v=20260401-1405" defer></script>
-<script src="capacitor.js?v=20260401-1405" defer></script>
-<script src="back-handler.js?v=20260401-1405" defer></script>
-<script src="changelog.js?v=20260401-1405" defer></script>
-<script src="startmenu.js?v=20260401-1405" defer></script>
+<link rel="stylesheet" href="changelog-popup.css?v=.0.0">
+<link rel="stylesheet" href="help/help-popup.css?v=.0.0">
+<script src="help/help-popup.js?v=.0.0" defer></script>
+<script src="version.js?v=.0.0" defer></script>
+<script src="capacitor.js?v=.0.0" defer></script>
+<script src="back-handler.js?v=.0.0" defer></script>
+<script src="changelog.js?v=.0.0" defer></script>
+<script src="startmenu.js?v=.0.0" defer></script>
 
 <!-- FIX 7: Service worker registration failure shown in console — acceptable
      for a local game app. No user-visible error needed unless offline support
@@ -90,5 +97,5 @@ window.addEventListener('DOMContentLoaded', function () {
   if (typeof initDotsToggle === 'function') initDotsToggle();
 });
 </script>
-<script>var APP_EDITION="free";</script></body>
+</body>
 </html>

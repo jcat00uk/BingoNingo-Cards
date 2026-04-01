@@ -1,6 +1,6 @@
 window.CHANGELOG = {
 
-  '20260401-2002': {
+  '20260401-2008': {
     changes: [
       { tag: 'new', text: 'Add inmage to bingocaller start infograpic', editions: 'all' },
       { tag: 'new', text: 'Changelog popup shows on version update with What\'s New entries per edition', editions: 'all' },
