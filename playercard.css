@@ -658,8 +658,10 @@ input, textarea {
   /* top is fixed; left is set dynamically by JS to align with the card's left edge */
   top: env(safe-area-inset-top, 0px);
   width: 185px;
-  max-height: calc(100vh - 70px);
+  max-height: calc(100dvh - 70px);
   overflow-y: auto;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
   background-color: rgba(10, 10, 10, 0.97);
   display: flex;
   flex-direction: column;
@@ -1367,7 +1369,7 @@ body.has-ad-banner.big-card-active #cardsWrapper {
 
 /* Theme panel: stop at top of banner, fully scrollable above it */
 body.has-ad-banner #themePanelWrapper {
-  max-height: calc(100vh - 130px);
+  max-height: calc(100dvh - 130px);
 }
 
 /* QR / confirm modals: centre content in the visible area above banner */
