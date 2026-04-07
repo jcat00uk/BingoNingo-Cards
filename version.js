@@ -1,1 +1,1 @@
-const APP_VERSION="20260407-2209",APP_EDITION="free ",APP_BUILD_MODE="debug",APP_ADS="false ";
+const APP_VERSION="20260407-2213",APP_EDITION="free ",APP_BUILD_MODE="debug",APP_ADS="false ";
