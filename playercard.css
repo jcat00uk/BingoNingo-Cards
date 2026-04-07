@@ -263,9 +263,9 @@ input, textarea {
 .card td {
   border: 1px solid #555;
   height: 50px;
-  height: clamp(28px, calc((100svh - 280px) / 9), 50px);
+  height: clamp(28px, calc((100svh - 340px) / 9), 50px);
   width: 50px;
-  width:  clamp(28px, calc((100svh - 280px) / 9), 50px);
+  width:  clamp(28px, calc((100svh - 340px) / 9), 50px);
   text-align: center;
   font-weight: bold;
   font-size: 18px;
@@ -1334,8 +1334,9 @@ body.big-card-active .big-card-share-code {
 /* build bat — never on Android  */
 /* ============================= */
 body.has-ad-banner .card td {
-  height: clamp(24px, calc((100svh - 350px) / 9), 50px);
-  width:  clamp(24px, calc((100svh - 350px) / 9), 50px);
+  height: clamp(22px, calc((100svh - 410px) / 9), 50px);
+  width:  clamp(22px, calc((100svh - 410px) / 9), 50px);
+  font-size: 14px;
 }
 
 body.has-ad-banner .card {
@@ -1350,6 +1351,20 @@ body.has-ad-banner .version-label {
   bottom: 70px !important;
 }
 
+body.has-ad-banner #cardsWrapper {
+  padding-bottom: 65px;
+}
+
 body.has-ad-banner.big-card-active #cardsWrapper {
+  padding-bottom: 65px;
+}
+
+/* Theme panel: stop at top of banner, fully scrollable above it */
+body.has-ad-banner #themePanelWrapper {
+  max-height: calc(100vh - 130px);
+}
+
+/* QR / confirm modals: centre content in the visible area above banner */
+body.has-ad-banner .modal-overlay {
   padding-bottom: 60px;
 }
