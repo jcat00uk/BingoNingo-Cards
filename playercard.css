@@ -790,8 +790,11 @@ input, textarea {
   box-shadow: 0 0 4px rgba(255,255,255,0.35);
 }
 
-/* Save button */
+/* Save button — sticky so it's always reachable in big card / landscape mode */
 #saveThemeBtn {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   margin-top: 8px;
   width: 100%;
   padding: 6px 0;
