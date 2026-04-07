@@ -263,9 +263,9 @@ input, textarea {
 .card td {
   border: 1px solid #555;
   height: 50px;
-  height: clamp(38px, calc((100svh - 120px) / 6), 50px);
+  height: clamp(28px, calc((100svh - 280px) / 9), 50px);
   width: 50px;
-  width:  clamp(38px, calc((100svh - 120px) / 6), 50px);
+  width:  clamp(28px, calc((100svh - 280px) / 9), 50px);
   text-align: center;
   font-weight: bold;
   font-size: 18px;
@@ -1334,12 +1334,16 @@ body.big-card-active .big-card-share-code {
 /* build bat — never on Android  */
 /* ============================= */
 body.has-ad-banner .card td {
-  height: clamp(28px, calc((100svh - 220px) / 18), 50px);
-  width:  clamp(28px, calc((100svh - 220px) / 18), 50px);
+  height: clamp(24px, calc((100svh - 350px) / 9), 50px);
+  width:  clamp(24px, calc((100svh - 350px) / 9), 50px);
 }
 
 body.has-ad-banner .card {
   max-width: 100%;
+}
+
+body.has-ad-banner #cardsWrapper {
+  padding-bottom: 65px;
 }
 
 body.has-ad-banner .version-label {
