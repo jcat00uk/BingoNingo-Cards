@@ -262,8 +262,8 @@ input, textarea {
 /* Number cells */
 .card td {
   border: 1px solid #555;
-  height: 50px;
-  width: 50px;
+  height: clamp(38px, calc((100dvh - 120px) / 6), 50px);
+  width:  clamp(38px, calc((100dvh - 120px) / 6), 50px);
   text-align: center;
   font-weight: bold;
   font-size: 18px;
@@ -1324,4 +1324,26 @@ body.big-card-active .big-card-share-code {
   font-size: 11px;
   color: #555;
   padding: 8px 0 4px;
+}
+
+/* ============================= */
+/* WEB ADSENSE BANNER OFFSET     */
+/* body class injected by web    */
+/* build bat — never on Android  */
+/* ============================= */
+body.has-ad-banner .card td {
+  height: clamp(28px, calc((100dvh - 220px) / 18), 50px);
+  width:  clamp(28px, calc((100dvh - 220px) / 18), 50px);
+}
+
+body.has-ad-banner .card {
+  max-width: 100%;
+}
+
+body.has-ad-banner .version-label {
+  bottom: 70px !important;
+}
+
+body.has-ad-banner.big-card-active #cardsWrapper {
+  padding-bottom: 60px;
 }
