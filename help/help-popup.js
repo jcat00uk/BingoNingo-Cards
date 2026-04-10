@@ -169,6 +169,8 @@
       startX = e.clientX;
       startY = e.clientY;
       pressTimer = setTimeout(function () {
+         // Disable long‑press when dots are hidden
+       if (document.body.classList.contains('help-dots-hidden')) return;
         if (!moved) {
           currentTarget = el;
           triggerVibrate(30);
