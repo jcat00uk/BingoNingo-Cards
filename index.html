@@ -18,6 +18,10 @@
     }
     html { scroll-behavior: smooth; }
     body { font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; line-height:1.6; }
+    
+    body.has-ad-banner {
+  padding-bottom:60px; /* same height as injected banner */
+}
 
     .hero { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px 20px 60px; position:relative; overflow:hidden; }
     .hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(255,68,68,.12) 0%,transparent 70%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(51,153,255,.08) 0%,transparent 60%); pointer-events:none; }
@@ -85,9 +89,35 @@
       .hero-btns { flex-direction:column; align-items:center; }
       .btn-primary,.btn-secondary { width:100%; max-width:280px; justify-content:center; }
     }
+    .scroll-indicator {
+  position:absolute;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  text-align:center;
+  color:var(--muted);
+  font-size:0.8rem;
+  opacity:0.7;
+  animation:fadeUp 1s 0.5s ease both;
+}
+
+.scroll-indicator .chevron {
+  width:18px;
+  height:18px;
+  border-right:2px solid var(--muted);
+  border-bottom:2px solid var(--muted);
+  transform:rotate(45deg);
+  margin:6px auto 0;
+  animation:chevronBounce 1.4s infinite;
+}
+
+@keyframes chevronBounce {
+  0%, 100% { transform:translateY(0) rotate(45deg); }
+  50% { transform:translateY(6px) rotate(45deg); }
+}
   </style>
 </head>
-<body>
+<body class="has-ad-banner">
 
 <section class="hero">
   <div class="hero-banner">
@@ -235,7 +265,7 @@
         The web version includes the full player cards experience — no install required.  
         (Caller features are available in the Android app only.)
       </p>
-      <a href="https://bingoningo.thecrazycat.com" class="app-link web">
+      <a href="https://bingoningo.thecrazycat.com/playgame.html"" class="app-link web">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
           <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
@@ -249,7 +279,7 @@
 
 <footer>
   <div class="footer-links">
-    <a href="https://bingoningo.thecrazycat.com">Play Now</a>
+    <a href="https://bingoningo.thecrazycat.com/playgame.html">Play Now</a>
     <a href="https://bingoningo.thecrazycat.com/privacy.html">Privacy Policy</a>
     <a href="mailto:bingoningo@thecrazycat.com">Contact</a>
   </div>
@@ -257,6 +287,10 @@
     &copy; 2026 TheCrazyCat. BingoNingo is free to play. Contains optional in-app purchases. Contains advertising.
   </p>
 </footer>
+<div class="scroll-indicator">
+  <span>Scroll</span>
+  <div class="chevron"></div>
+</div>
 
 </body>
 </html>
