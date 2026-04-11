@@ -1269,6 +1269,7 @@ body.big-card-active .big-card-share-code {
 /* STEPS TEXT                    */
 /* ============================= */
 
+
 .steps-text {
   display: flex;
   flex-direction: column;
@@ -1279,6 +1280,8 @@ body.big-card-active .big-card-share-code {
   border: 1px solid #2a2a2a;
   border-radius: 8px;
   background: #1a1a1a;
+  position: relative;
+  
 }
 
 .steps-row {
@@ -1375,4 +1378,23 @@ body.has-ad-banner #themePanelWrapper {
 /* QR / confirm modals: centre content in the visible area above banner */
 body.has-ad-banner .modal-overlay {
   padding-bottom: 60px;
+}
+
+
+/* Cat pointing */
+
+/* Pull the cat OUT of the flex flow and position it freely */
+.steps-cat-row {
+  display: flex;
+  justify-content: center;   /* center the cat */
+  padding: 0;
+  margin-bottom: 6px;
+  border-bottom: none;       /* no divider line */
+}
+
+.steps-cat-img {
+  width: 400px;              /* adjust as needed */
+  height: auto;
+  max-width: none;
+  flex-shrink: 0;
 }
