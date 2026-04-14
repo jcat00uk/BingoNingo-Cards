@@ -70,19 +70,21 @@ input, textarea {
   padding-top: max(env(safe-area-inset-top), 16px);
 }
 
-.top-buttons button {
+.top-buttons button:not(.info-icon) {
   padding: 10px 20px;
   font-size: 16px;
   border-radius: 8px;
   cursor: pointer;
-  background-color: var(--btn-bg);    /* page UI theme */
-  color: var(--btn-text);             /* page UI theme */
-  border: 1px solid var(--border);   /* page UI theme */
-  transition: all 0.3s;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border: 1px solid var(--border);
+  transition: filter 0.2s, transform 0.1s;
 }
 
 .top-buttons button:disabled {
-  opacity: 0.5;
+  background-color: var(--btn-disabled-bg);
+  color: var(--btn-disabled-text);
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -186,6 +188,7 @@ input, textarea {
   background-color: var(--accent);    /* page UI theme */
   color: #fff;
 }
+
 
 /* FIX 13: Removed .preview-btn:active { transform: none } that was inconsistently
    cancelling the global scale feedback. Preview buttons now get the same
@@ -385,14 +388,14 @@ input, textarea {
   font-size: 16px;
   border-radius: 8px;
   cursor: pointer;
-  background-color: var(--btn-bg);    /* page UI theme */
-  color: var(--btn-text);             /* page UI theme */
-  border: 1px solid var(--border);   /* page UI theme */
-  transition: all 0.3s;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border: 1px solid var(--border);
+  transition: filter 0.2s, transform 0.1s;
 }
 
 .quick-pick-btn:hover {
-  background-color: var(--bg-input);  /* page UI theme */
+  filter: brightness(1.15);
 }
 
 #randomWarning {
@@ -420,7 +423,7 @@ input, textarea {
 }
 
 #confirmSelectionBtn:hover {
-  filter: brightness(0.9);
+  filter: brightness(1.15);
 }
 
 
@@ -428,35 +431,37 @@ input, textarea {
 /* 9. INFO ICON + POPOVER        */
 /* ============================= */
 
-.info-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
 
 /* FIX 2: Merged .info-icon and button.info-icon into one rule.
    The base had border-radius: 12px, the button override had 50% with !important.
    Since the element is always a button, just define it correctly once. */
+.info-container { position: relative; display: flex; align-items: center; }
+
 .info-icon {
-  background-color: var(--btn-bg);    /* page UI theme */
-  color: var(--btn-text);             /* page UI theme */
-  border: 1px solid var(--border);   /* page UI theme */
+  background-color: var(--btn-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  padding: 0;
+  width: 32px;
+  height: 32px;
   font-weight: bold;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s;
-  outline: none;
+  transition: filter 0.2s, transform 0.1s;
+  align-self: center;
+  flex-shrink: 0;
+  flex-grow: 0;
+  padding: 0;
 }
 
 .info-icon:hover {
-  background-color: var(--bg-input);  /* page UI theme */
+  filter: brightness(1.15);
 }
+
+
+
 
 .popover {
   position: fixed;
@@ -735,8 +740,7 @@ input, textarea {
 }
 
 #closeThemeBtn:hover {
-  background: var(--btn-bg);          /* page UI theme */
-  color: var(--text-primary);          /* page UI theme */
+  filter: brightness(1.15);
 }
 
 .theme-section-label {
@@ -772,7 +776,7 @@ input, textarea {
 }
 
 .theme-preset-btn:hover {
-  background: var(--bg-cell);         /* page UI theme */
+  filter: brightness(1.15);
 }
 
 .theme-preset-btn.active {
@@ -825,9 +829,9 @@ input, textarea {
 
 /* Theme trigger button (sits beside info button) */
 #themeBtn {
-  background-color: var(--btn-bg);    /* page UI theme */
-  color: var(--btn-text);             /* page UI theme */
-  border: 1px solid var(--border);   /* page UI theme */
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border: 1px solid var(--border);
   border-radius: 50%;
   width: 36px;
   height: 36px;
@@ -836,13 +840,13 @@ input, textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s;
+  transition: filter 0.2s, transform 0.1s;
   font-size: 16px;
   outline: none;
 }
 
 #themeBtn:hover {
-  background-color: var(--bg-input);  /* page UI theme */
+  filter: brightness(1.15);
 }
 
 #themeBtn.active {
@@ -907,36 +911,32 @@ input, textarea {
 }
 
 .modal-btn--confirm:hover {
-  background: #c73650;
+  filter: brightness(1.15);
 }
 
 .modal-btn--cancel {
-  background: var(--btn-bg);          /* page UI theme */
+  background: var(--btn-bg);
 }
 
 .modal-btn--cancel:hover {
-  background: var(--bg-input);        /* page UI theme */
+  filter: brightness(1.15);
 }
 
 /* ============================= */
 
-/* FIX 3: Added :not(:disabled) guard so disabled buttons don't flash limegreen.
-   FIX 13: Removed the .preview-btn:active { transform: none } override —
-   preview buttons now get consistent scale feedback like all other buttons. */
-button:not(:disabled):active,
+/* Active press feedback — universal rule in style.css covers button:not(:disabled):active.
+   These extra selectors catch non-button interactive elements on this page. */
 .quick-pick-btn:not(:disabled):active,
 .preview-btn:not(:disabled):active,
 #confirmSelectionBtn:not(:disabled):active,
 .info-icon:not(:disabled):active {
   transform: scale(0.95);
-  background-color: limegreen;
-  color: #fff;
-  transition: transform 0.1s, background-color 0.2s;
+  filter: brightness(0.9);
 }
 
 /* New Game button glows red when enabled */
 #newGameBtn:not(:disabled) {
-  background-color: red;
+  
   animation: glowPulse 1s infinite ease-in-out;
 }
 
@@ -1251,17 +1251,20 @@ body.big-card-active .big-card-share-code {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid #555;
-  background: #444;
-  color: #aaa;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-cell);
+  color: var(--text-muted);
   text-decoration: none;
   flex-shrink: 0;
   transition: background 0.2s;
 }
-.player-home-btn:hover { background: #555; color: #eee; }
+.player-home-btn:hover {
+  filter: brightness(1.15);
+}
+
 
 
 /* ============================= */

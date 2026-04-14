@@ -53,18 +53,18 @@ input, textarea {
 
 h1 {
   font-size: 3rem;
-  color: var(--accent);
+  color: var(--title-text);
   margin: 0 0 16px 0;
   animation: glow 1.5s ease-in-out 3;
 }
 
 @keyframes glow {
   0%, 100% {
-    text-shadow: 0 0 4px var(--accent);
+    text-shadow: 0 0 4px var(--title-text);
   }
 
   50% {
-    text-shadow: 0 0 12px var(--win-glow);
+    text-shadow: 0 0 12px var(--title-glow);
   }
 }
 
@@ -90,18 +90,23 @@ h1 {
   background-color: var(--btn-bg);
   border: 1px solid var(--border);
   color: var(--btn-text);
-  border: 1px solid #555;
-  transition: background 0.3s;
+  transition: filter 0.2s, transform 0.1s;
 }
 
-.menu-buttons button:hover {
-  background-color: var(--btn-hover);
+.menu-buttons button:not(:disabled):hover {
   filter: brightness(1.15);
 }
 
 button:disabled {
-  opacity: 0.5;
+  background-color: var(--btn-disabled-bg);
+  color: var(--btn-disabled-text);
+  opacity: 0.4;
   cursor: not-allowed;
+}
+
+button:not(:disabled):active {
+  transform: scale(0.95);
+  filter: brightness(0.9);
 }
 
 /* FIX 3: Removed !important. Guard with :not(:disabled) so disabled buttons
@@ -139,8 +144,7 @@ button:disabled {
 }
 
 .how-it-works-btn:hover {
- background-color: var(--action-btn-bg);
- filter: brightness(1.15);
+  filter: brightness(1.15);
 }
 
 .how-it-works-btn[aria-expanded="true"] .how-arrow {
