@@ -31,7 +31,7 @@ body {
   text-align: center;
   background-color: var(--bg-page);   /* page UI theme */
   color: var(--text-primary);          /* page UI theme */
-  padding-top: env(safe-area-inset-top);
+  padding-top: 0;
 }
 
 /* FIX 6 + FIX 12: Removed !important from entire block and removed outline:none
@@ -207,6 +207,7 @@ input, textarea {
   gap: 12px;
   margin-top: 12px;
   width: 100%;
+  padding-bottom: max(100px, calc(env(safe-area-inset-bottom, 0px) + 80px));
 }
 
 
@@ -1221,9 +1222,12 @@ body.big-card-active #cardsWrapper {
   margin-top: 0;
   width: 100%;
   overflow: hidden;
+  padding-bottom: 0;
 }
 
 body.big-card-active .big-card-wrapper {
+  flex: 1;
+  min-height: 0;
   height: 100%;
   padding: 4px 6px 4px;
   box-sizing: border-box;

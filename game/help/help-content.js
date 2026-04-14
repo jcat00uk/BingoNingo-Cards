@@ -334,6 +334,17 @@ caller_start: {
     ]
   },
 
+  caller_customise_themes: {
+    title: 'Customise Themes',
+    body: [
+      'Expand this section to edit individual colours for every element of the app\'s UI. Changes apply live so you can see them instantly.',
+      'Tap any <strong>colour circle</strong> to open the colour picker for that element. Drag to choose a colour — the app updates behind it in real time. Press <strong>Cancel</strong> to revert or <strong>Apply</strong> to keep the change.',
+      'Tap any <strong>label name</strong> to flash the affected elements on screen so you can identify what that variable controls before opening the picker.',
+      'Use the <strong>Save</strong> button to store your current colours as a named theme — it will appear in the preset list above.',
+      'Use <strong>Import/Export</strong> to back up your theme as a JSON file or share it between devices.'
+    ]
+  },
+
   caller_themes: {
     title: 'Themes',
     body: [
