@@ -313,15 +313,14 @@ caller_start: {
 	image: 'print-card-style.png'
   },
 
-  print_qr_codes: {
-    title: 'Add QR Code Key Pages',
+  print_duplex_qr: {
+    title: 'Add QR Rear Page (Duplex)',
     body: [
-      'When enabled, one or more <strong>Key Pages</strong> are appended to the PDF after the card pages.',
-      'Each key page contains a grid of QR codes — one per card pair — showing the share code, card numbers, and page reference.',
-      'The caller can scan any QR code on the key page to instantly load that player\'s cards into AutoCheck, without needing the player\'s phone.',
-      'Only available in <strong>Random with Share Codes</strong> mode.'
-    ],
-    image: 'qr-key-page.png'
+      'When enabled, a <strong>rear page</strong> is added after every card sheet in the PDF — designed for duplex (double-sided) printing.',
+      'Each cell on the rear page contains a QR code and card number, precisely aligned so after a standard long-edge flip, each QR lands directly behind its card.',
+      'Players or the caller can scan the QR code to instantly load that card in the BingoNingo app.',
+      'In <strong>Random with Share Codes</strong> mode, a group QR badge also appears in the gutter between each pair of cards — scanning it loads both cards at once.'
+    ]
   },
 
   print_download: {
