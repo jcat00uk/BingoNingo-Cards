@@ -93,8 +93,10 @@ h1 {
   transition: filter 0.2s, transform 0.1s;
 }
 
-.menu-buttons button:not(:disabled):hover {
-  filter: brightness(1.15);
+@media (hover: hover) {
+  .menu-buttons button:not(:disabled):hover {
+    filter: brightness(1.15);
+  }
 }
 
 button:disabled {
@@ -143,8 +145,10 @@ button:not(:disabled):active {
   transition: background 0.2s;
 }
 
-.how-it-works-btn:hover {
-  filter: brightness(1.15);
+@media (hover: hover) {
+  .how-it-works-btn:hover {
+    filter: brightness(1.15);
+  }
 }
 
 .how-it-works-btn[aria-expanded="true"] .how-arrow {
@@ -193,8 +197,10 @@ button:not(:disabled):active {
   color: #7cb8f0;
   text-decoration: none;
 }
-.how-it-works-body a:hover {
-  text-decoration: underline;
+@media (hover: hover) {
+  .how-it-works-body a:hover {
+    text-decoration: underline;
+  }
 }
 
 .how-play-along {
@@ -232,9 +238,11 @@ button:not(:disabled):active {
   line-height: 1.6;
   transition: background 0.15s;
 }
-.qr-btn:hover {
-  background-color: var(--btn-hover);
-  filter: brightness(1.15);
+@media (hover: hover) {
+  .qr-btn:hover {
+    background-color: var(--btn-hover);
+    filter: brightness(1.15);
+  }
 }
 
 
@@ -303,8 +311,10 @@ button:not(:disabled):active {
   transition: background 0.15s, border-color 0.15s;
 }
 
-.stp-row:hover {
-  background: var(--bg-input);
+@media (hover: hover) {
+  .stp-row:hover {
+    background: var(--bg-input);
+  }
 }
 
 .stp-row.active {

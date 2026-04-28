@@ -1,7 +1,8 @@
 window.CHANGELOG = {
 
-  '20260428-061104': {
+  '20260428-064738': {
     changes: [
+      { tag: 'fix', text: 'Fixed buttons requiring 2 clicks on main main menu to activate', editions: 'all' },
       { tag: 'fix', text: 'Fixed some page scaling issues', editions: 'full' },
       { tag: 'new', text: 'Added ads', editions: 'all' },
       { tag: 'new', text: 'Added themes to bingocaller', editions: 'full' }
