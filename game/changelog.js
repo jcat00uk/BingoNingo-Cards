@@ -1,6 +1,6 @@
 window.CHANGELOG = {
 
-  '20260428-064738': {
+  '20260428-120100': {
     changes: [
       { tag: 'fix', text: 'Fixed buttons requiring 2 clicks on main main menu to activate', editions: 'all' },
       { tag: 'fix', text: 'Fixed some page scaling issues', editions: 'full' },
