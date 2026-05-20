@@ -272,7 +272,8 @@ input, textarea {
 .card td {
   border: 1px solid var(--border);   /* page UI theme */
   width: 11.111%;
-  height: clamp(34px, calc((100vh - 310px) / 9), 50px);
+  height: clamp(30px, calc((100vh - 380px) / 9), 44px);
+  height: clamp(30px, calc((var(--real-vh, 100svh) - 380px) / 9), 44px);
   text-align: center;
   font-weight: bold;
   font-size: 18px;
@@ -387,8 +388,35 @@ input, textarea {
   margin-bottom: 6px;
 }
 
+.quick-pick-collapse-btn {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  transition: background 0.2s;
+}
+
+.qp-arrow {
+  font-size: 11px;
+  color: #666;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.quick-pick-collapse-btn[aria-expanded="false"] .qp-arrow {
+  transform: rotate(180deg);
+}
+
 .quick-pick-btn {
-  padding: 12px 20px;
+  padding: 8px 12px;
   font-size: 16px;
   border-radius: 8px;
   cursor: pointer;
@@ -1027,8 +1055,8 @@ input:disabled + .slider { opacity: 0.4; cursor: not-allowed; }
   border-radius: 8px;
   padding: 7px 11px;
   font-family: monospace;
-  font-size: 24px;
-  letter-spacing: 0.16em;
+  font-size: 18px;
+  letter-spacing: 0.08em;
   color: var(--text-primary);         /* page UI theme */
   cursor: pointer;
   flex: 1;

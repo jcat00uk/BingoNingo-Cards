@@ -6,6 +6,12 @@
   <title>Player Bingo Cards</title>
   <script>!function(){try{var t=JSON.parse(localStorage.getItem('bingoningo_theme_active'));if(t&&typeof t==='object'){var r=document.documentElement;Object.keys(t).forEach(function(k){r.style.setProperty(k,t[k]);});}}catch(e){}}();</script>
   <link rel="stylesheet" href="playercard.css?v=.0.0">
+  <script>
+    function setRealVh(){document.documentElement.style.setProperty('--real-vh',window.innerHeight+'px');}
+    setRealVh();
+    window.addEventListener('resize',setRealVh);
+    document.addEventListener('DOMContentLoaded',setRealVh);
+  </script>
 </head>
 <body>
 
@@ -207,8 +213,11 @@
   </div>
   <div id="bigCardModeHint" class="selection-toggle-hint" style="display:none;">Screen will switch to landscape rotation when your card selection is confirmed.</div>
 
+  <button class="quick-pick-collapse-btn" id="quickPickCollapseBtn" aria-expanded="true">
+    <span id="quickPickLabel">Quick Pick Random Cards</span>
+    <span class="qp-arrow">▲</span>
+  </button>
   <div class="random-pick-container" id="randomPickContainer">
-    <div id="quickPickLabel">Quick Pick Random Cards:</div>
     <div class="quick-buttons">
       <button class="quick-pick-btn" id="clearSelectionBtn" data-count="0" title="Reset selection">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="display:block;"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
@@ -231,8 +240,6 @@
       </svg>
     </button>
   </div>
-  <div class="share-code-copy-hint">Tap to copy — give this to your caller</div>
-
   <div class="toggle-row">
     <label class="switch" for="advancedToggle">
       <input type="checkbox" id="advancedToggle">
@@ -240,7 +247,6 @@
     </label>
     <label for="advancedToggle" id="advancedSelectionLabel" style="font-size:13px;color:#aaa;cursor:pointer;">Advanced Selection</label>
   </div>
-  <div id="advancedSelectionHint" class="selection-toggle-hint" style="display:none;">Shared number count between cards is shown on the right of each card.</div>
 
   <div id="searchWrapper">
     <div class="search-wrapper">

@@ -1,6 +1,16 @@
 window.CHANGELOG = {
 
-  '20260520-141215': {
+  '20260520-171735': {
+    changes: [
+      { tag: 'new', text: 'Continuing closed testing, thank you', editions: 'all' },
+      { tag: 'fix', text: 'Three-card layout no longer requires scrolling on smaller screen phones', editions: 'all' },
+      { tag: 'fix', text: 'Share code on the card selection screen now fits on one line on smaller phones', editions: 'all' },
+      { tag: 'new', text: 'Quick Pick section on the card selection screen can now be collapsed using a toggle, and automatically hides when Advanced Selection is turned on', editions: 'all' },
+      { tag: 'fix', text: 'Select Cards panel is now taller on smaller phones, showing significantly more cards at once', editions: 'full' }
+    ]
+  },
+
+  '20260520-1653': {
     changes: [
       { tag: 'new', text: 'Continuing closed testing, thank you', editions: 'all' },
       { tag: 'fix', text: 'fixed when 3 cards are being displayed there a large blank area beneath which makes the page scrollable', editions: 'all' },
