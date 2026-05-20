@@ -1,11 +1,41 @@
 window.CHANGELOG = {
 
-  '20260428-120100': {
+  '20260520-141215': {
     changes: [
-      { tag: 'fix', text: 'Fixed buttons requiring 2 clicks on main main menu to activate', editions: 'all' },
-      { tag: 'fix', text: 'Fixed some page scaling issues', editions: 'full' },
+      { tag: 'new', text: 'Continuing closed testing, thank you', editions: 'all' },
+      { tag: 'fix', text: 'fixed when 3 cards are being displayed there a large blank area beneath which makes the page scrollable', editions: 'all' },
+      { tag: 'fix', text: 'corrected the first column on player cards was not uniform with the other columns due the width being 1 digit', editions: 'all' },
+      { tag: 'update', text: 'Updated Faster,Slower, play,pause buttons so they can be themed', editions: 'full' }
+    ]
+  },
+
+  '20260519-1809': {
+    changes: [
+      { tag: 'new', text: 'Update to main Bingo Caller - Closed Testing Continues Thanks', editions: 'all' },
+      { tag: 'new', text: 'Auto Call mode — replaces Next button with play/pause/faster/slower controls', editions: 'full' },
+      { tag: 'new', text: 'Auto Call speed presets: 2s, 5s, 10s, 20s with progress bar showing time to next number', editions: 'full' },
+      { tag: 'new', text: 'Auto Call pauses on win — shows Win! state for 5 seconds then resumes or hard-pauses depending on settings', editions: 'full' },
+      { tag: 'new', text: 'Pause on Win toggle: off = 5s timer then auto-resume; on = hard pause until host presses play', editions: 'full' },
+      { tag: 'new', text: 'Pause on Win toggle disabled automatically when Confirm Win is off', editions: 'full' },
+      { tag: 'new', text: 'Auto Call settings panel in the settings menu with speed and Pause on Win options', editions: 'full' },
+      { tag: 'fix', text: 'Auto Call resumes correctly after cancelling the Win! wait state', editions: 'full' },
+      { tag: 'fix', text: 'Auto Call timer now credits the 5s win pause against the current interval — faster speeds resume immediately, longer speeds continue mid-interval', editions: 'full' },
+      { tag: 'fix', text: 'Auto Call timer no longer skips forward when app returns from background on Android', editions: 'full' },
+      { tag: 'update', text: 'Warning shown when 3s Auto Call speed is selected while Bingo Lingo TTS is active, no disables Bingo Lingo', editions: 'full' }
+    ]
+  },
+
+  '20260518-1516': {
+    changes: [
+      { tag: 'new', text: 'Print cards with a QR code rear page for duplex printing', editions: 'full' },
+      { tag: 'new', text: 'Duplex print hint tells you to flip on long or short edge depending on layout', editions: 'full' },
       { tag: 'new', text: 'Added ads', editions: 'all' },
-      { tag: 'new', text: 'Added themes to bingocaller', editions: 'full' }
+      { tag: 'new', text: 'Added themes to bingocaller', editions: 'full' },
+      { tag: 'update', text: 'Menu buttons and links highlight on hover on desktop', editions: 'all' },
+      { tag: 'fix', text: 'Fixed buttons requiring 2 clicks on main menu to activate', editions: 'all' },
+      { tag: 'fix', text: 'Fixed some page scaling issues', editions: 'full' },
+      { tag: 'fix', text: 'Changelog popup no longer suppressed if changelog.js loads after page ready', editions: 'all' },
+      { tag: 'update', text: 'Warning shown when 2s Auto Call speed is selected while Bingo Lingo TTS is active', editions: 'full' }
     ]
   },
 

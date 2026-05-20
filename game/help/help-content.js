@@ -112,6 +112,22 @@ window.helpContent = {
     ]
   },
 
+  caller_auto_call: {
+    title: 'Auto Call',
+    body: [
+      'When enabled, the <strong>Next</strong> button is replaced by a three-button cluster: <strong>⏪ slower</strong>, <strong>▶/⏸ play/pause</strong>, and <strong>⏩ faster</strong>.',
+      'Press <strong>▶</strong> to start. Numbers are called automatically at the chosen interval (2 s, 5 s, 10 s, or 20 s). A progress bar fills across the button to show when the next number is due.',
+      'Press <strong>⏸</strong> to pause — the bar freezes at its current position and the remaining time is remembered. Pressing <strong>▶</strong> again resumes from exactly where it left off.',
+      'Choose your speed in the <strong>Speed</strong> row that appears below the toggle, or use <strong>⏪ / ⏩</strong> during a game.'
+    ],
+    list: [
+      '<strong>Win detected</strong> — auto pauses and the button shows <strong>Win!</strong> with a 5-second amber countdown. If nobody calls bingo in that time, auto resumes. Press the button or tap <strong>Confirm Win</strong> to take over manually — auto will not resume until you press <strong>▶</strong>.',
+      '<strong>Undo</strong> — pressing ↩ pauses auto. Press <strong>▶</strong> to resume when ready.',
+      '<strong>Confirm Win pending</strong> — <strong>▶</strong> is blocked while the Confirm Win button is active. Tap Confirm Win first, then resume.',
+      'Auto Call can be toggled on or off at any time, including mid-game. Your speed preference is saved between sessions.'
+    ]
+  },
+
 caller_start: {
     title: 'Start',
     body: [

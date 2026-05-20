@@ -210,6 +210,10 @@ input, textarea {
   padding-bottom: max(100px, calc(env(safe-area-inset-bottom, 0px) + 80px));
 }
 
+#cardsWrapper[data-count="3"] {
+  padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
+}
+
 
 /* ============================= */
 /* 5. BINGO CARD STYLING         */
@@ -258,18 +262,17 @@ input, textarea {
 }
 
 .card table {
-  width: auto;
+  width: 100%;
   margin: 0 auto;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 /* Number cells */
 .card td {
   border: 1px solid var(--border);   /* page UI theme */
-  height: 50px;
-  height: clamp(28px, calc((100svh - 340px) / 9), 50px);
-  width: 50px;
-  width:  clamp(28px, calc((100svh - 340px) / 9), 50px);
+  width: 11.111%;
+  height: clamp(34px, calc((100vh - 310px) / 9), 50px);
   text-align: center;
   font-weight: bold;
   font-size: 18px;
