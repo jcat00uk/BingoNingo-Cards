@@ -1,6 +1,19 @@
 window.CHANGELOG = {
 
-  '20260521-080626': {
+  '20260521-090113': {
+    changes: [
+      { tag: 'new', text: 'Continuing closed testing, thank you', editions: 'all' },
+      { tag: 'update', text: 'Card selection is now a two-step flow: tap Check Cards to show your share code and QR to the caller, then tap Confirm Cards to load your cards', editions: 'all' },
+      { tag: 'update', text: 'Share code and QR code moved from the card selection screen into the new Check Cards step, where the QR is shown immediately without an extra tap', editions: 'all' },
+      { tag: 'new', text: 'Tap the share code in the Check Cards screen to copy it to the clipboard', editions: 'all' },
+      { tag: 'new', text: 'Close button (✕) added to card selection screen — cancels selection and returns to the main screen', editions: 'all' },
+      { tag: 'new', text: 'Close button (✕) added to Check Cards screen — returns to card selection without confirming', editions: 'all' },
+      { tag: 'fix', text: 'Help popups no longer appear behind modal overlays', editions: 'all' },
+      { tag: 'update', text: 'Ad timing improved: the first session start sets the 30-minute timer without showing an ad, giving new players a full first session uninterrupted', editions: 'all' }
+    ]
+  },
+
+  '20260521-0859': {
     changes: [
       { tag: 'new', text: 'Continuing closed testing, thank you', editions: 'all' },
       { tag: 'fix', text: 'Three-card layout no longer requires scrolling on smaller screen phones', editions: 'all' },
