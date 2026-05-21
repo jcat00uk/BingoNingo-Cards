@@ -1,6 +1,6 @@
 window.CHANGELOG = {
 
-  '20260520-171735': {
+  '20260521-080626': {
     changes: [
       { tag: 'new', text: 'Continuing closed testing, thank you', editions: 'all' },
       { tag: 'fix', text: 'Three-card layout no longer requires scrolling on smaller screen phones', editions: 'all' },

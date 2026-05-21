@@ -30,12 +30,12 @@
         <li>Click <strong>New Game</strong> to start a new game.</li>
         <li>Use the <strong>Quick Pick</strong> buttons to automatically pick 1, 2, or 3 cards. <strong>Quick Pick 2</strong> and <strong>Quick Pick 3</strong> always pick cards with no repeated numbers between them.</li>
         <li>Enable <strong>Big Card Mode</strong> (below the total cards count) before selecting a card to lock to a single large card display. In Big Card Mode only 1 card can be selected — Quick Pick 2 and 3 are disabled. On mobile, the card switches to landscape for easier reading.</li>
-        <li>Once you have selected cards, your <strong>share code</strong> appears below the Quick Pick buttons. Tap the code to copy it and share with your caller so they can load your cards into AutoCheck. Tap the <strong>QR button</strong> next to the code to show a fullscreen QR code your caller can scan directly.</li>
+        <li>Once you have selected cards, tap <strong>Check Cards</strong> to see your share code and QR code — show or read these to your caller so they can load your cards into AutoCheck.</li>
         <li>By default only your selected cards are shown. Turn on <strong>Advanced Selection</strong> to browse and search all available cards manually.</li>
         <li>In Advanced mode, cards are sorted by how many numbers they share with your current selection — fewer shared numbers appear first. Cards with 6 or more shared numbers are greyed out and blocked.</li>
         <li>Cards showing an amber <strong>X shared</strong> label have some overlapping numbers — they can still be selected but some numbers will appear on more than one of your cards.</li>
         <li>If a number appears on more than one of your cards, tapping it will automatically mark it on all your cards.</li>
-        <li>Click <strong>Confirm Selection</strong> to load your cards.</li>
+        <li>Tap <strong>Check Cards</strong> to review your share code with the caller, then tap <strong>Confirm Cards</strong> to load your cards.</li>
         <li>Tap <strong>🎨</strong> to change the card theme — pick a preset or customise the background, number, highlight and title colours individually. Tap <strong>Save theme</strong> to keep your changes. The <strong>QR button</strong> next to 🎨 lets you show your share code and QR to the caller at any time during the game — it is greyed out until cards are confirmed.</li>
         <li>Single click/tap a number to mark it.</li>
         <li>Double click/tap a number to undo it.</li>
@@ -200,6 +200,7 @@
 
 <!-- Card selection area -->
 <div id="cardSelectionWrapper" style="display:none;">
+  <button id="cancelSelectionBtn" title="Cancel" style="position:absolute;top:10px;right:12px;background:none;border:none;color:#888;font-size:20px;cursor:pointer;padding:0;line-height:1;z-index:10;">✕</button>
   <div><span id="pickPromptLabel">Pick up to 3 cards:</span></div>
   <div id="totalCardsLabel">Total Cards: 0</div>
 
@@ -228,18 +229,6 @@
     </div>
   </div>
 
-  <div class="share-code-row">
-    <span class="share-code-label" id="shareCodeLabel">Your share<br>code</span>
-    <span id="shareCodeDisplay" class="share-code-pill share-code-empty">–</span>
-    <button id="shareQrBtn" class="share-qr-btn" title="Show QR code" disabled>
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="display:block;">
-        <rect x="2" y="2" width="8" height="8" rx="1"/>
-        <rect x="14" y="2" width="8" height="8" rx="1"/>
-        <rect x="2" y="14" width="8" height="8" rx="1"/>
-        <rect x="16" y="16" width="6" height="6" rx="1" fill="currentColor" stroke="none"/>
-      </svg>
-    </button>
-  </div>
   <div class="toggle-row">
     <label class="switch" for="advancedToggle">
       <input type="checkbox" id="advancedToggle">
@@ -269,7 +258,7 @@
     <span aria-hidden="true">⚠️</span> Please check with other players to ensure your cards are unique.
   </div>
 
-  <button id="confirmSelectionBtn">Confirm Selection</button>
+  <button id="confirmSelectionBtn">Check Cards</button>
 </div>
 
 <!-- Bingo cards display -->
@@ -309,7 +298,6 @@ window.addEventListener('DOMContentLoaded', function () {
     { id: 'themeBtn',               key: 'player_theme',              type: 'button' },
     { id: 'bigCardModeLabel',        key: 'player_big_card_mode',      type: 'label'  },
     { id: 'quickPickLabel',         key: 'player_quick_pick',         type: 'label'  },
-    { id: 'shareCodeLabel',         key: 'player_share_code',         type: 'label'  },
     { id: 'advancedSelectionLabel', key: 'player_advanced_selection', type: 'label'  },
   ]);
 });

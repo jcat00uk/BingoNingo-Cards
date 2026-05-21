@@ -75,23 +75,32 @@
 
   // Checks all gates; shows ad and calls callback after dismiss.
   // If any gate blocks (not native, freq cap, not ready, etc.) calls callback immediately.
+  // First-ever trigger sets the 30-min timer without showing an ad (warm-start).
   function maybeShowAdThenDo(activityCount, callback) {
-    var adsEnabled  = isAdsEnabled();
-    var native      = isNative();
-    var last        = localStorage.getItem('bingoningo_last_ad_ts');
-    var freqBlocked = last && (Date.now() - parseInt(last, 10)) < 30 * 60 * 1000;
-    var adsRemoved  = (typeof APP_EDITION !== 'undefined' && APP_EDITION === 'full')
-                      && localStorage.getItem('bingoningo_ads_removed') === 'true';
+    var adsEnabled   = isAdsEnabled();
+    var native       = isNative();
+    var adsRemoved   = (typeof APP_EDITION !== 'undefined' && APP_EDITION === 'full')
+                       && localStorage.getItem('bingoningo_ads_removed') === 'true';
     var zeroActivity = (activityCount !== null && activityCount !== undefined && activityCount === 0);
 
-    console.log('[AdMobManager] maybeShowAdThenDo: adsEnabled=' + adsEnabled +
-      ' isNative=' + native +
-      ' adsRemoved=' + adsRemoved +
-      ' freqBlocked=' + !!freqBlocked +
-      ' activityCount=' + activityCount +
-      ' adReady=' + _adReady);
+    // Not eligible for ads — skip immediately
+    if (!adsEnabled || !native || adsRemoved || zeroActivity) {
+      if (callback) callback();
+      return;
+    }
 
-    if (!adsEnabled || !native || adsRemoved || freqBlocked || zeroActivity || !_adReady) {
+    var last = localStorage.getItem('bingoningo_last_ad_ts');
+
+    // First ever trigger — warm the 30-min timer, no ad shown
+    if (!last) {
+      localStorage.setItem('bingoningo_last_ad_ts', String(Date.now()));
+      if (callback) callback();
+      return;
+    }
+
+    // Within the 30-min window — skip
+    var freqBlocked = (Date.now() - parseInt(last, 10)) < 30 * 60 * 1000;
+    if (freqBlocked || !_adReady) {
       if (callback) callback();
       return;
     }
@@ -100,7 +109,6 @@
     if (!plugin) { if (callback) callback(); return; }
 
     _afterAdCallback = callback;
-    console.log('[AdMobManager] showInterstitial: calling (with callback)');
     plugin.showInterstitial()
       .then(function() { console.log('[AdMobManager] showInterstitial: shown'); })
       .catch(function(e) {

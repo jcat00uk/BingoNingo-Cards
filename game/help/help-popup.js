@@ -244,6 +244,15 @@
 
   window.initDotsToggle = function () { initDotsToggle(); };
 
+  // Register a single dynamically-created element after initHelpSystem has already run.
+  // type: 'button' | 'label'
+  window.registerHelpTarget = function (el, key, type) {
+    if (!el || !overlay) return;
+    if (type === 'button') addButtonDot(el, false);
+    else addInlineDot(el, false);
+    attachLongPress(el, key);
+  };
+
   window.initHelpSystem = function (targets) {
     buildPopupDOM();
 
