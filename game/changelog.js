@@ -1,6 +1,18 @@
 window.CHANGELOG = {
 
-  '20260521-090113': {
+  '20260524-155002': {
+    changes: [
+      { tag: 'fix', text: 'Fixed issue where main menu buttons need 2 button taps to work, when first loading app', editions: 'all' },
+      { tag: 'new', text: 'Continuing closed testing, thank you', editions: 'all' },
+      { tag: 'new', text: 'Close button (✕) added to the Bingo Caller Select Cards screen — discards any unconfirmed changes and returns to the main screen', editions: 'full' },
+      { tag: 'fix', text: 'Confirmed player codes on the Bingo Caller now correctly restore after a page refresh or navigating back to the menu', editions: 'full' },
+      { tag: 'fix', text: 'Unconfirmed player codes (added but not confirmed) no longer survive a page refresh, preventing clashes bypassing the duplicate check', editions: 'full' },
+      { tag: 'update', text: 'Up to 3 ads can now be shown per 4-hour session (previously 2), giving a more balanced frequency for active players', editions: 'all' },
+      { tag: 'fix', text: 'Ad cooldown timer no longer resets after 24 hours of inactivity, so returning players see ads at the correct frequency', editions: 'all' }
+    ]
+  },
+
+  '20260522-1356': {
     changes: [
       { tag: 'new', text: 'Continuing closed testing, thank you', editions: 'all' },
       { tag: 'update', text: 'Card selection is now a two-step flow: tap Check Cards to show your share code and QR to the caller, then tap Confirm Cards to load your cards', editions: 'all' },
