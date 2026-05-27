@@ -371,6 +371,24 @@ caller_start: {
     ]
   },
 
+  caller_near_win_text: {
+    title: 'Near Win Text',
+    body: [
+      'Shows a live count of how many numbers away each loaded player card is from its next win.',
+      'Updates automatically as each number is called. Appears above the <strong>Next Win</strong> label at the bottom of the screen.',
+      'Only available when <strong>AutoCheck</strong> is on — the toggle is disabled otherwise.'
+    ]
+  },
+
+  caller_keep_screen_on: {
+    title: 'Keep Screen On',
+    body: [
+      'Prevents the device screen from dimming or locking while the caller app is open.',
+      'Useful for long sessions where you don\'t want to keep waking the screen between calls.',
+      'Your preference is saved automatically between sessions.'
+    ]
+  },
+
   caller_remove_ads: {
     title: 'Remove Ads',
     body: [

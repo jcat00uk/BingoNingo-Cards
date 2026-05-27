@@ -38,7 +38,7 @@
         <li>Tap <strong>Check Cards</strong> to review your share code with the caller, then tap <strong>Confirm Cards</strong> to load your cards.</li>
         <li>Tap <strong>🎨</strong> to change the card theme — pick a preset or customise the background, number, highlight and title colours individually. Tap <strong>Save theme</strong> to keep your changes. The <strong>QR button</strong> next to 🎨 lets you show your share code and QR to the caller at any time during the game — it is greyed out until cards are confirmed.</li>
         <li>Single click/tap a number to mark it.</li>
-        <li>Double click/tap a number to undo it.</li>
+        <li>Double-tap or press and hold a number to undo it.</li>
         <li>Click <strong>End Game</strong> to finish.</li>
         <li>Any questions? Ask a fellow player!</li>
         <li>Press and hold any button or label with a small <span style="display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;background:rgba(160,180,210,0.7);color:#fff;font-size:6px;font-weight:700;vertical-align:middle;">?</span> indicator for a quick explanation of that feature.</li>
@@ -203,6 +203,14 @@
   <button id="cancelSelectionBtn" title="Cancel" style="position:absolute;top:10px;right:12px;background:none;border:none;color:#888;font-size:20px;cursor:pointer;padding:0;line-height:1;z-index:10;">✕</button>
   <div><span id="pickPromptLabel">Pick up to 3 cards:</span></div>
   <div id="totalCardsLabel">Total Cards: 0</div>
+  <div id="initialsRow" class="initials-row">
+    <span class="initials-label">Your initials</span>
+    <div class="initials-input-wrap">
+      <input type="text" id="playerInitialsInput" maxlength="3" placeholder="e.g. JBC" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+      <button type="button" id="clearInitialsBtn" class="initials-clear-btn" aria-label="Clear initials" style="display:none;">✕</button>
+    </div>
+    <span class="initials-optional-note">(optional)</span>
+  </div>
 
   <div class="toggle-row" id="bigCardToggleRow">
     <label class="switch" for="bigCardToggle">
@@ -263,7 +271,7 @@
 
 <!-- Bingo cards display -->
 <div id="cardsWrapper"></div>
-<div id="doubleTapHint" class="double-tap-hint" style="display:none;">Double-tap to undo a marked number</div>
+<div id="doubleTapHint" class="double-tap-hint" style="display:none;">Double-tap or hold to undo a marked number</div>
 
 <!-- BingoNingo win animation text — kept at body level for fixed overlay -->
 <!-- FIX 5: Added aria-live so screen readers announce the win -->

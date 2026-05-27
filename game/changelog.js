@@ -1,6 +1,6 @@
 window.CHANGELOG = {
 
-  '20260524-155002': {
+  '20260527-133807': {
     changes: [
       { tag: 'fix', text: 'Fixed issue where main menu buttons need 2 button taps to work, when first loading app', editions: 'all' },
       { tag: 'new', text: 'Continuing closed testing, thank you', editions: 'all' },

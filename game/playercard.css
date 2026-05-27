@@ -245,6 +245,76 @@ input, textarea {
   display: none;
 }
 
+.card-header-initials {
+  position: absolute;
+  left: 0;
+  font-size: inherit;
+  color: inherit;
+  text-shadow: inherit;
+}
+
+/* Initials input row on card selection screen */
+.initials-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 4px;
+  font-size: 13px;
+}
+
+.initials-label {
+  color: #aaa;
+}
+
+.initials-optional-note {
+  color: #666;
+  font-size: 11px;
+}
+
+.initials-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.initials-input-wrap input {
+  width: 52px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  padding: 3px 6px;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #eee;
+  text-transform: uppercase;
+}
+
+.initials-clear-btn {
+  background: none;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 6px;
+  line-height: 1.4;
+}
+
+/* Big card initials — more prominent than share code */
+.big-card-initials {
+  font-size: clamp(12px, 3vw, 18px);
+  font-weight: 700;
+  color: var(--card-title);
+  text-shadow: 0 0 5px var(--card-title);
+  letter-spacing: 2px;
+}
+
+body.big-card-active .big-card-initials {
+  font-size: clamp(10px, 2.5vw, 16px);
+}
+
 .card-tap-hint {
   position: absolute;
   right: 0;
