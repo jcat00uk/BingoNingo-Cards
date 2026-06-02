@@ -16,11 +16,11 @@
   var KEY_GAME_START    = 'bingoningo_game_start_ts';
 
   // Thresholds
-  var COOLDOWN_MS     = 30 * 60 * 1000;       // 30 min minimum between ads
+  var COOLDOWN_MS     = 20 * 60 * 1000;       // 20 min minimum between ads
   var SESSION_MS      = 4  * 60 * 60 * 1000;  // 4h rolling session window
   var SESSION_CAP     = 3;                     // max ads per 4h session
   var INACTIVITY_MS   = 24 * 60 * 60 * 1000;  // 24h inactivity triggers soft reset
-  var MIN_DURATION_MS = 90 * 1000;             // 90s minimum game duration
+  var MIN_DURATION_MS = 3  * 60 * 1000;        // 3 min minimum game duration
 
   function getAdUnitId() {
     return (typeof APP_BUILD_MODE !== 'undefined' && APP_BUILD_MODE === 'release')
@@ -47,14 +47,20 @@
            localStorage.getItem('bingoningo_ads_removed') === 'true';
   }
 
-  function preloadInterstitial() {
+  function preloadInterstitial(retryMs) {
     if (!isAdsEnabled() || !isNative()) return;
     var plugin = getPlugin();
     if (!plugin) return;
     _adReady = false;
     plugin.prepareInterstitial({ adId: getAdUnitId() })
       .then(function() { _adReady = true; })
-      .catch(function(e) { console.warn('[AdMobManager] prepareInterstitial failed:', e); });
+      .catch(function(e) {
+        console.warn('[AdMobManager] prepareInterstitial failed:', e);
+        var delay = retryMs || 30000;
+        if (delay < 300000) {
+          setTimeout(function() { preloadInterstitial(delay * 2); }, delay);
+        }
+      });
   }
 
   function init() {
@@ -69,6 +75,10 @@
     // Ad dismissed: record timestamp and increment session count here,
     // not at show-time, because showInterstitial() resolving only means
     // the call was accepted — not that the ad was actually displayed.
+    plugin.addListener('interstitialAdOpened', function() {
+      _adReady = false;
+    });
+
     plugin.addListener('interstitialAdDismissed', function() {
       localStorage.setItem(KEY_LAST_AD, String(Date.now()));
       var count = parseInt(localStorage.getItem(KEY_SESSION_COUNT) || '0', 10);
@@ -141,7 +151,7 @@
     var lastAd = parseInt(localStorage.getItem(KEY_LAST_AD) || '0', 10);
     if (lastAd && (now - lastAd) < COOLDOWN_MS) return;
 
-    // Session cap: max 2 ads per 4h window
+    // Session cap: max 3 ads per 4h window
     var sessionCount = parseInt(localStorage.getItem(KEY_SESSION_COUNT) || '0', 10);
     if (sessionCount >= SESSION_CAP) return;
 

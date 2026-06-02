@@ -1,6 +1,33 @@
 window.CHANGELOG = {
 
-  '20260527-133807': {
+  '20260602-175155': {
+    changes: [
+      { tag: 'new', text: 'Initial public release, thanks for installing, report any bugs via the Play Store App support email', editions: 'all' }
+    ]
+  },
+
+  '20260602-1714': {
+    changes: [
+      { tag: 'new', text: 'Keep screen on — prevent your device sleeping during a game. Toggle on the main menu or in the caller settings (⚙).', editions: 'all' },
+      { tag: 'new', text: 'Near win text — shows how close the nearest cards are to the current win (e.g. \'2 plyrs: 1 from line\'). Enable in caller settings (⚙), requires AutoCheck.', editions: 'full' },
+      { tag: 'update', text: 'Hold to undo — press and hold a marked number on a player card to deselect it, in addition to double-tap.', editions: 'all' },
+      { tag: 'new', text: 'Players can enter up to 3 initials on the card selection screen', editions: 'all' },
+      { tag: 'new', text: 'Player share code displays initials when set, e.g. ABC-1234-JBC', editions: 'all' },
+      { tag: 'new', text: 'QR code and Copy button include player initials (e.g. ABC1234JBC)', editions: 'all' },
+      { tag: 'new', text: 'Caller: scanning a player QR code automatically fills in their initials', editions: 'full' },
+      { tag: 'new', text: 'Caller: dedicated Initials field next to Player Code entry; auto-jumps after code is complete', editions: 'full' },
+      { tag: 'new', text: 'Caller: pasting a full combined code (e.g. ABC1234JBC) auto-splits into code and initials fields', editions: 'full' },
+      { tag: 'new', text: 'Caller: player initials shown on cards and in the player list instead of P1, P2', editions: 'full' },
+      { tag: 'new', text: 'Caller: player initials shown in the Verify Win popup card header', editions: 'full' },
+      { tag: 'fix', text: 'Caller: card result no longer shows redundant card number (e.g. shows \'2 LINES\' not \'2 LINES, CARD 369\')', editions: 'full' },
+      { tag: 'fix', text: 'Near win text now reads \'2 cards: 2 from house\' instead of \'2 plyrs\'', editions: 'full' },
+      { tag: 'fix', text: 'Holding to paste in the player code input no longer triggers the help popup', editions: 'full' },
+      { tag: 'fix', text: 'Player code card tags now scroll horizontally when they overflow on narrow screens', editions: 'full' },
+      { tag: 'fix', text: 'Player code input now fills available width on all screen sizes', editions: 'full' }
+    ]
+  },
+
+  '20260527-0954': {
     changes: [
       { tag: 'fix', text: 'Fixed issue where main menu buttons need 2 button taps to work, when first loading app', editions: 'all' },
       { tag: 'new', text: 'Continuing closed testing, thank you', editions: 'all' },
