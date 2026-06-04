@@ -1,6 +1,6 @@
 window.CHANGELOG = {
 
-  '20260602-175155': {
+  '20260604-215705': {
     changes: [
       { tag: 'new', text: 'Initial public release, thanks for installing, report any bugs via the Play Store App support email', editions: 'all' }
     ]
