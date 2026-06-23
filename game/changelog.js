@@ -1,7 +1,9 @@
 window.CHANGELOG = {
 
-  '20260604-215705': {
+  '20260623-065907': {
     changes: [
+      { tag: 'fix', text: 'Fix display issues on Tablet screens', editions: 'all' },
+      { tag: 'new', text: 'Add TTS speed settings', editions: 'full' },
       { tag: 'new', text: 'Initial public release, thanks for installing, report any bugs via the Play Store App support email', editions: 'all' }
     ]
   },

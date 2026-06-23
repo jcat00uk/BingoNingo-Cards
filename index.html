@@ -1,372 +1,413 @@
 <!DOCTYPE html>
-<html lang="en">
+<!--
+===================================================================
+  THECRAZYCAT.COM  —  HOW TO EDIT THIS SITE  (read me first!)
+===================================================================
+
+  THE 3 FILES THAT MAKE THIS SITE:
+    1. index.html   <- THIS FILE. All the words, links & images.
+    2. styles.css   <- All the colours, fonts, spacing (the "look").
+    3. app.jsx      <- The little "Tweaks" panel only. You can ignore it.
+
+  COMMON THINGS YOU'LL WANT TO DO  (search the file for the word in CAPS):
+
+    • Change an app's name / description / links ...... search:  EDIT APP CARD
+    • Add a BRAND NEW app to the grid ................ search:  ADD A NEW APP
+    • Add a "Latest updates" entry ................... search:  EDIT UPDATES
+    • Change your contact email ..................... search:  EDIT CONTACT
+    • Change the studio "About" text ................ search:  EDIT ABOUT
+    • Swap the placeholder "C" logo ................. search:  EDIT LOGO
+    • Change colours / theme ....................... open styles.css, top section
+
+  HOW TO PUBLISH A CHANGE:
+    1. Edit the text below and save the file.
+    2. Upload index.html (and styles.css / app.jsx if you changed those)
+       to wherever thecrazycat.com is hosted - the same place your
+       BingoNingo site lives. That's it.
+
+  GOOD TO KNOW:
+    • Links open like  href="https://..."  - just change the address.
+    • App icons / screenshots are loaded straight from the Google Play
+      servers by their web address, so they always stay up to date.
+    • The QuizBlitz icon is a real file in the  assets/  folder.
+===================================================================
+-->
+<html lang="en" data-direction="arcade" data-density="regular">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="BingoNingo — Free bingo player cards app for Android. Play along at any bingo game with your own digital cards on your phone. Web version available for iPhone & iPad.">
-  <title>BingoNingo — Free Bingo Player Cards</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg:#0f0f12; --bg2:#17171d; --bg3:#1e1e26;
-      --red:#ff4444; --red2:#ff6666; --gold:#ffd54f;
-      --green:#4caf50; --blue:#3399ff;
-      --text:#eee; --muted:#888; --border:#2a2a36;
-    }
-    html { scroll-behavior: smooth; }
-    body { font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; line-height:1.6; }
-    
-    body.has-ad-banner {
-      padding-bottom:60px;
-    }
-
-    .hero { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px 20px 60px; position:relative; overflow:hidden; }
-    .hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(255,68,68,.12) 0%,transparent 70%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(51,153,255,.08) 0%,transparent 60%); pointer-events:none; }
-    .hero-banner { width:100%; max-width:580px; border-radius:20px; overflow:hidden; margin-bottom:32px; box-shadow:0 20px 60px rgba(255,68,68,.2),0 4px 20px rgba(0,0,0,.6); animation:fadeUp .8s ease both; }
-    .hero-banner img { width:100%; height:auto; display:block; }
-    .hero-title { font-family:'Fredoka One',cursive; font-size:clamp(2.8rem,8vw,5rem); color:var(--red2); text-shadow:0 0 30px rgba(255,100,100,.4); line-height:1; margin-bottom:12px; animation:fadeUp .8s .1s ease both; }
-
-    .hero-sub { font-size:clamp(1rem,3vw,1.3rem); color:var(--muted); max-width:520px; margin:0 auto 36px; font-weight:600; animation:fadeUp .8s .2s ease both; }
-    .hero-sub span { color:var(--gold); }
-
-    .hero-btns { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; animation:fadeUp .8s .3s ease both; }
-
-    .btn-primary { display:inline-flex; align-items:center; gap:10px; padding:14px 28px; background:var(--red); color:#fff; font-family:'Nunito',sans-serif; font-size:1rem; font-weight:800; border-radius:50px; text-decoration:none; border:none; cursor:pointer; transition:transform .15s,box-shadow .15s; box-shadow:0 4px 20px rgba(255,68,68,.35); }
-    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(255,68,68,.45); }
-
-    .btn-secondary { display:inline-flex; align-items:center; gap:10px; padding:14px 28px; background:transparent; color:var(--text); font-family:'Nunito',sans-serif; font-size:1rem; font-weight:700; border-radius:50px; text-decoration:none; border:2px solid var(--border); cursor:pointer; transition:transform .15s,border-color .15s; }
-    .btn-secondary:hover { transform:translateY(-2px); border-color:var(--muted); }
-
-    .section { padding:80px 20px; max-width:900px; margin:0 auto; }
-    .section-label { font-size:.75rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; color:var(--red2); margin-bottom:10px; text-align:center; }
-    .section-title { font-family:'Fredoka One',cursive; font-size:clamp(1.8rem,5vw,2.8rem); text-align:center; margin-bottom:12px; }
-    .section-desc { text-align:center; color:var(--muted); font-size:1rem; max-width:520px; margin:0 auto 52px; font-weight:600; }
-
-    .divider { width:48px; height:3px; background:var(--red); border-radius:2px; margin:0 auto 48px; }
-
-    .features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
-    .feature-card { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:28px 24px; transition:transform .2s,border-color .2s; }
-    .feature-card:hover { transform:translateY(-3px); border-color:#3a3a4a; }
-    .feature-icon { font-size:2rem; margin-bottom:14px; display:block; }
-    .feature-title { font-family:'Fredoka One',cursive; font-size:1.2rem; margin-bottom:8px; }
-    .feature-desc { font-size:.9rem; color:var(--muted); line-height:1.6; font-weight:600; }
-
-    .steps-section { background:var(--bg2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
-    .steps-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:32px; text-align:center; }
-    .step { display:flex; flex-direction:column; align-items:center; gap:12px; }
-    .step-num { width:52px; height:52px; border-radius:50%; background:var(--bg3); border:2px solid var(--red); display:flex; align-items:center; justify-content:center; font-family:'Fredoka One',cursive; font-size:1.4rem; color:var(--red2); flex-shrink:0; }
-    .step-title { font-family:'Fredoka One',cursive; font-size:1.05rem; }
-    .step-desc { font-size:.88rem; color:var(--muted); font-weight:600; line-height:1.5; }
-
-    .apps-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
-    .app-card { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:32px 28px; transition:transform .2s,border-color .2s; }
-    .app-card:hover { transform:translateY(-3px); border-color:#3a3a4a; }
-    .app-card.featured { border-color:var(--red); box-shadow:0 0 0 1px rgba(255,68,68,.2),0 8px 32px rgba(255,68,68,.1); }
-    .app-badge { display:inline-block; padding:3px 12px; border-radius:20px; font-size:.75rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; margin-bottom:16px; }
-    .badge-free { background:rgba(76,175,80,.15); color:var(--green); border:1px solid rgba(76,175,80,.3); }
-    .badge-web  { background:rgba(51,153,255,.15); color:var(--blue);  border:1px solid rgba(51,153,255,.3); }
-
-    .app-title { font-family:'Fredoka One',cursive; font-size:1.5rem; margin-bottom:10px; }
-    .app-desc { font-size:.92rem; color:var(--muted); font-weight:600; margin-bottom:24px; line-height:1.6; }
-    .app-link { display:inline-flex; align-items:center; gap:8px; padding:10px 20px; border-radius:50px; font-size:.9rem; font-weight:800; text-decoration:none; transition:transform .15s; }
-    .app-link:hover { transform:translateY(-2px); }
-    .app-link.android { background:rgba(76,175,80,.15); color:var(--green); border:1px solid rgba(76,175,80,.3); }
-    .app-link.web     { background:rgba(51,153,255,.15); color:var(--blue);  border:1px solid rgba(51,153,255,.3); }
-
-    footer { border-top:1px solid var(--border); padding:32px 20px; text-align:center; }
-    .footer-links { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; margin-bottom:16px; }
-    .footer-links a { color:var(--muted); text-decoration:none; font-size:.9rem; font-weight:600; transition:color .2s; }
-    .footer-links a:hover { color:var(--text); }
-    .footer-copy { font-size:.82rem; color:#444; font-weight:600; }
-
-    @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-
-    @media(max-width:600px) {
-      .hero { padding:32px 16px 48px; }
-      .section { padding:60px 16px; }
-      .hero-btns { flex-direction:column; align-items:center; }
-      .btn-primary,.btn-secondary { width:100%; max-width:280px; justify-content:center; }
-    }
-
-    .scroll-indicator {
-      position:absolute;
-      bottom:20px;
-      left:50%;
-      transform:translateX(-50%);
-      text-align:center;
-      color:var(--muted);
-      font-size:0.8rem;
-      opacity:0.7;
-      animation:fadeUp 1s 0.5s ease both;
-    }
-
-    .scroll-indicator .chevron {
-      width:18px;
-      height:18px;
-      border-right:2px solid var(--muted);
-      border-bottom:2px solid var(--muted);
-      transform:rotate(45deg);
-      margin:6px auto 0;
-      animation:chevronBounce 1.4s infinite;
-    }
-
-    @keyframes chevronBounce {
-      0%, 100% { transform:translateY(0) rotate(45deg); }
-      50% { transform:translateY(6px) rotate(45deg); }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TheCrazyCat — playful apps that just work</title>
+<meta name="description" content="TheCrazyCat is an indie studio making playful, useful Android apps — including BingoNingo, QuizBlitz and RingReminder." />
+<link rel="stylesheet" href="styles.css" />
 </head>
+<body>
 
-<body class="has-ad-banner">
-
-<section class="hero">
-  <div class="hero-banner">
-    <img src="bingoningobanner.png" alt="BingoNingo — Free Bingo Player Cards App">
+<!-- ============ NAV ============ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top" aria-label="TheCrazyCat home">
+      <!-- EDIT LOGO: this "C" tile is a placeholder. To use a real logo image,
+           replace the <span class="mark logo-tile">C</span> with:
+           <img class="mark" src="assets/your-logo.png" alt="TheCrazyCat" />
+           (do the same in the About section and the footer.) -->
+      <span class="mark logo-tile">C</span>
+      <span>The<b>Crazy</b>Cat</span>
+    </a>
+    <div class="nav-links">
+      <a href="#apps">Apps</a>
+      <a href="#updates">Updates</a>
+      <a href="#about">Studio</a>
+    </div>
+    <a class="btn btn-primary" href="#apps">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="currentColor"/></svg>
+      See the apps
+    </a>
   </div>
+</nav>
 
-  <h1 class="hero-title">BingoNingo</h1>
+<a id="top"></a>
 
-  <p class="hero-sub">
-    The free bingo player cards app for <span>Android</span>.<br>
-    iPhone & iPad players can use the BingoNingo Cards web version instantly — no install needed.<br>
-    Want the full experience? Try the <span>BingoNingo</span> app with Caller, Cards + Printing.
-  </p>
-
-  <div class="hero-btns">
-
-  <!-- Web Version -->
-  <a href="https://bingoningo.thecrazycat.com/game/" class="btn-primary">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12zm7.5-3.5 5 3.5-5 3.5V8.5z"/>
-    </svg>
-    Play Cards in Browser
-  </a>
-
-  <!-- Full App -->
-  <a href="https://play.google.com/store/apps/details?id=com.jcat.bingoningo.app" class="btn-secondary">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M3.18 23.76a2 2 0 0 0 2.14-.22l11.76-6.78-3.3-3.3-10.6 10.3zm-1.1-20.6v17.68l9.56-8.84L2.08 3.16zm19.4 7.42-2.8-1.62-3.66 3.38 3.66 3.38 2.82-1.64a2 2 0 0 0 0-3.5zM5.32.46A2 2 0 0 0 3.18.22L13.74 10.6l3.3-3.3L5.32.46z"/>
-    </svg>
-    Get Full App
-  </a>
-
-  <!-- Free Cards App -->
-  <a href="https://play.google.com/store/apps/details?id=com.jcat.bingoningo.app.free" class="btn-secondary">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M3.18 23.76a2 2 0 0 0 2.14-.22l11.76-6.78-3.3-3.3-10.6 10.3zm-1.1-20.6v17.68l9.56-8.84L2.08 3.16zm19.4 7.42-2.8-1.62-3.66 3.38 3.66 3.38 2.82-1.64a2 2 0 0 0 0-3.5zM5.32.46A2 2 0 0 0 3.18.22L13.74 10.6l3.3-3.3L5.32.46z"/>
-    </svg>
-    Get Free Cards App
-  </a>
-
-</div>
-</section>
-
-<section class="section">
-  <p class="section-label">Features</p>
-  <h2 class="section-title">Everything you need to play</h2>
-  <p class="section-desc">BingoNingo gives every player their own digital bingo cards — no paper, no pencils, no fuss.</p>
-  <div class="divider"></div>
-
-  <div class="features-grid">
-
-    <div class="feature-card">
-      <span class="feature-icon">🎴</span>
-      <div class="feature-title">Digital Bingo Cards</div>
-      <p class="feature-desc">Pick up to 3 cards from thousands of unique combinations. Tap numbers as they're called — no pen required.</p>
-    </div>
-
-    <div class="feature-card">
-      <span class="feature-icon">⚡</span>
-      <div class="feature-title">Quick Pick</div>
-      <p class="feature-desc">Let the app pick 1, 2, or 3 cards instantly. Quick Pick 2 and 3 always choose cards with no repeated numbers between them.</p>
-    </div>
-
-    <div class="feature-card">
-      <span class="feature-icon">🔗</span>
-      <div class="feature-title">Share Codes</div>
-      <p class="feature-desc">Get a unique share code for your selection. Share it with your caller to link your cards to their AutoCheck system.</p>
-    </div>
-
-    <div class="feature-card">
-      <span class="feature-icon">🔍</span>
-      <div class="feature-title">Big Card Mode</div>
-      <p class="feature-desc">Switch to a single large card in landscape for easier number spotting — perfect if you prefer a bigger display.</p>
-    </div>
-
-    <div class="feature-card">
-      <span class="feature-icon">🎨</span>
-      <div class="feature-title">Card Themes</div>
-      <p class="feature-desc">Customise your cards with multiple colour themes — Default dark, Ocean night, Forest, Gold rush, and Purple haze.</p>
-    </div>
-
-    <div class="feature-card">
-      <span class="feature-icon">📱</span>
-      <div class="feature-title">Works Everywhere</div>
-      <p class="feature-desc">Free Android apps, or use the web version in any browser on iPhone, iPad, or any device.</p>
-    </div>
-
-    <div class="feature-card">
-      <span class="feature-icon">🖨️</span>
-      <div class="feature-title">Printable Cards</div>
-      <p class="feature-desc">Create a ready‑to‑print PDF of your selected cards directly in the full Android app — perfect for groups or offline play.</p>
-    </div>
-
-  </div>
-</section>
-
-<section class="section">
-  <p class="section-label">Compare Versions</p>
-  <h2 class="section-title">Which version is right for you?</h2>
-  <p class="section-desc">BingoNingo comes in two Android apps plus a browser version for iOS players.</p>
-  <div class="divider"></div>
-
-  <div class="features-grid" style="grid-template-columns:1fr 1fr 1fr; text-align:center;">
-    <div class="feature-card">
-      <div class="feature-title">BingoNingo (Full App)</div>
-      <p class="feature-desc">
-        • Bingo Caller<br>
-        • Player Cards<br>
-        • Card Printing<br>
-        • Remove Ads upgrade<br>
-        • Android only
-      </p>
-    </div>
-
-    <div class="feature-card">
-      <div class="feature-title">BingoNingo Cards</div>
-      <p class="
-          <div class="feature-card">
-        <p class="feature-desc">
-        • Player Cards only<br>
-        • Ad supported<br>
-        • Android only
-      </p>
-    </div>
-
-    <div class="feature-card">
-      <div class="feature-title">Web Version</div>
-      <p class="feature-desc">
-        • Player Cards only<br>
-        • No install needed<br>
-        • Works on iPhone, iPad & any browser
-      </p>
-    </div>
-  </div>
-</section>
-
-<section class="steps-section">
-  <div class="section">
-    <p class="section-label">How it works</p>
-    <h2 class="section-title">Up and playing in seconds</h2>
-    <p class="section-desc">No sign-up. No account. Just open and play.</p>
-    <div class="divider"></div>
-    <div class="steps-grid">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-title">Open the app</div>
-        <p class="step-desc">Launch BingoNingo on Android or open the web version in any browser.</p>
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">Indie app studio</span>
+        <h1>Tiny apps with <span class="pop">big personality.</span></h1>
+        <p class="hero-lead">TheCrazyCat builds playful, genuinely useful Android apps — the kind that do one thing brilliantly and don't get in your way. Here's what we're making.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#apps">Browse the apps</a>
+          <a class="btn btn-ghost" href="https://bingoningo.thecrazycat.com/game/" target="_blank" rel="noopener">Play BingoNingo Cards in browser</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><b>2</b><span>live on Google Play</span></div>
+          <div class="stat"><b>2</b><span>in production</span></div>
+          <div class="stat"><b>UK</b><span>indie made</span></div>
+        </div>
       </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-title">Pick your cards</div>
-        <p class="step-desc">Tap New Game, choose with Quick Pick or browse manually, then confirm.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-title">Share your code</div>
-        <p class="step-desc">Copy your share code and give it to your bingo caller for AutoCheck.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-title">Play!</div>
-        <p class="step-desc">Tap numbers as they're called. Just shout Bingo when you win!</p>
+      <div class="hero-visual">
+        <div class="spotlight">
+          <span class="spot-tag"><span class="dot"></span>Flagship · Live now</span>
+          <img class="spot-shot" src="https://play-lh.googleusercontent.com/yHYLQTV10hZn9BGJXnqPVSohbrmuu4jkGVYQIXIorpiLMPY8yrVxtCKix_a44oBjdmMQTovqSv9IPV40PlFwYGU=w526-h296" alt="BingoNingo Bingo Caller screenshot" style="object-fit: contain" />
+          <div class="spot-row">
+            <span class="ic"><img src="https://play-lh.googleusercontent.com/UR2xQhNVcsN9dnyKk6hRBVv38SL1JI2V43YABy2aH7JxHgKr0X6NkoK6M9IYG1907eIMza325c921pc20AtA3Sc=s128" alt="" /></span>
+            <div>
+              <h3>BingoNingo Bingo Caller</h3>
+              <div class="meta">90-ball UK bingo · Rated 3+ · Free</div>
+            </div>
+          </div>
+          <div class="spot-cta">
+            <a class="app-link solid" href="https://play.google.com/store/apps/details?id=com.jcat.bingoningo.app" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.4 13.9 12 3.6 21.6c-.3-.2-.5-.6-.5-1V3.4c0-.4.2-.8.5-1z" opacity=".85"/><path d="M16.8 9.1 18.9 10c1.2.6 1.2 2.4 0 3l-2.1.9L14 12l2.8-2.9z"/><path d="M3.6 2.4 16.8 9.1 14 12 3.6 2.4z" opacity=".6"/><path d="M3.6 21.6 14 12l2.8 2.9-13.2 6.7z" opacity=".7"/></svg>
+              Google Play
+            </a>
+            <a class="app-link" href="https://bingoningo.thecrazycat.com/game/" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="currentColor"/></svg>
+              Play in browser
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-</section>
+</header>
 
-<section class="section">
-  <p class="section-label">Get the app</p>
-  <h2 class="section-title">Free on every platform</h2>
-  <p class="section-desc">
-    Download the full Android app, or use the cards-only versions for quick play on any device.
-  </p>
+<!-- ============ APPS ============ -->
+<section class="apps" id="apps">
+  <div class="wrap">
+    <div class="apps-head reveal">
+      <div class="section-head" style="margin-bottom:0">
+        <span class="eyebrow">The lineup</span>
+        <h2>Apps we've built &amp; are building</h2>
+        <p>Live on the Play Store, playable in your browser, or cooking in the workshop.</p>
+      </div>
+      <div class="filters" role="tablist" aria-label="Filter apps">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="live">Live</button>
+        <button class="chip" data-filter="prod">In production</button>
+      </div>
+    </div>
 
-  <div class="divider"></div>
+    <!-- ============================================================
+         EDIT APP CARD  -  each <article> below is one app.
+         To change one: edit its <h3> (name), <p class="desc"> (blurb),
+         the <span class="tag"> chips, and the href="..." on its links.
+         Status badge: data-status="live" or "prod" + the <span class="badge">.
 
-  <div class="apps-grid">
+         ADD A NEW APP: copy one whole <article>...</article> block,
+         paste it above the ghost card, and change its details.
+         ============================================================ -->
+    <div class="app-grid">
 
-    <!-- FULL VERSION -->
-    <div class="app-card featured">
-      <span class="app-badge badge-free">Full App</span>
-      <div class="app-title">BingoNingo</div>
-      <p class="app-desc">
-        The complete bingo experience — Caller, Player Cards, and Card Printing.
-        Free to download with an optional Remove Ads upgrade.
-      </p>
-      <a href="https://play.google.com/store/apps/details?id=com.jcat.bingoningo.app" class="app-link android">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M3.18 23.76a2 2 0 0 0 2.14-.22l11.76-6.78-3.3-3.3-10.6 10.3zm-1.1-20.6v17.68l9.56-8.84L2.08 3.16zm19.4 7.42-2.8-1.62-3.66 3.38 3.66 3.38 2.82-1.64a2 2 0 0 0 0-3.5zM5.32.46A2 2 0 0 0 3.18.22L13.74 10.6l3.3-3.3L5.32.46z"/>
-        </svg>
-        Download BingoNingo
+      <!-- BingoNingo Bingo Caller -->
+      <article class="app-card reveal" data-status="live">
+        <div class="app-top">
+          <div class="app-icon"><img src="https://play-lh.googleusercontent.com/UR2xQhNVcsN9dnyKk6hRBVv38SL1JI2V43YABy2aH7JxHgKr0X6NkoK6M9IYG1907eIMza325c921pc20AtA3Sc=s128" alt="BingoNingo Bingo Caller icon" /></div>
+          <span class="badge live"><span class="dot"></span>Live</span>
+        </div>
+        <h3>BingoNingo Bingo Caller</h3>
+        <p class="desc">A complete 90-ball UK bingo caller. Clear text-to-speech calling, QR card scanning and automatic win checking — one device hosts, players join from their phones.</p>
+        <div class="tags"><span class="tag">Android</span><span class="tag">90-ball bingo</span><span class="tag">TTS caller</span></div>
+        <div class="app-links">
+          <a class="app-link solid" href="https://play.google.com/store/apps/details?id=com.jcat.bingoningo.app" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.4 13.9 12 3.6 21.6c-.3-.2-.5-.6-.5-1V3.4c0-.4.2-.8.5-1z" opacity=".85"/><path d="M16.8 9.1 18.9 10c1.2.6 1.2 2.4 0 3l-2.1.9L14 12l2.8-2.9z"/><path d="M3.6 2.4 16.8 9.1 14 12 3.6 2.4z" opacity=".6"/><path d="M3.6 21.6 14 12l2.8 2.9-13.2 6.7z" opacity=".7"/></svg>
+            Google Play
+          </a>
+          <a class="app-link" href="https://bingoningo.thecrazycat.com" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3a14 14 0 010 18 14 14 0 010-18z" stroke="currentColor" stroke-width="1.5"/></svg>
+            Website
+          </a>
+        </div>
+      </article>
+
+      <!-- BingoNingo Cards -->
+      <article class="app-card reveal" data-status="live">
+        <div class="app-top">
+          <div class="app-icon"><img src="https://play-lh.googleusercontent.com/TZjfbokmMSM2HzSWxxqpQ-yn-4iTu6mIlxAjtIs3F5j8oEjjwbXY48NRIX_u25F3AZ4wrlMznLLLB8_guR8zJrI=s128" alt="BingoNingo Cards icon" /></div>
+          <span class="badge live"><span class="dot"></span>Live</span>
+        </div>
+        <h3>BingoNingo Cards</h3>
+        <p class="desc">Digital 90-ball player cards to replace paper sheets. Every card has a QR code for instant setup — play three at once, or switch to Big Card mode for one large card.</p>
+        <div class="tags"><span class="tag">Android</span><span class="tag">Player cards</span><span class="tag">QR setup</span></div>
+        <div class="app-links">
+          <a class="app-link solid" href="https://play.google.com/store/apps/details?id=com.jcat.bingoningo.app.free" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.4 13.9 12 3.6 21.6c-.3-.2-.5-.6-.5-1V3.4c0-.4.2-.8.5-1z" opacity=".85"/><path d="M16.8 9.1 18.9 10c1.2.6 1.2 2.4 0 3l-2.1.9L14 12l2.8-2.9z"/><path d="M3.6 2.4 16.8 9.1 14 12 3.6 2.4z" opacity=".6"/><path d="M3.6 21.6 14 12l2.8 2.9-13.2 6.7z" opacity=".7"/></svg>
+            Google Play
+          </a>
+          <a class="app-link" href="https://bingoningo.thecrazycat.com" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3a14 14 0 010 18 14 14 0 010-18z" stroke="currentColor" stroke-width="1.5"/></svg>
+            Website
+          </a>
+        </div>
+      </article>
+
+      <!-- BingoNingo Cards Web -->
+      <article class="app-card reveal" data-status="live">
+        <div class="app-top">
+          <div class="app-icon"><img src="https://play-lh.googleusercontent.com/TZjfbokmMSM2HzSWxxqpQ-yn-4iTu6mIlxAjtIs3F5j8oEjjwbXY48NRIX_u25F3AZ4wrlMznLLLB8_guR8zJrI=s128" alt="BingoNingo Cards icon" /></div>
+          <span class="badge web"><span class="dot"></span>Web app</span>
+        </div>
+        <h3>BingoNingo Cards — Web</h3>
+        <p class="desc">The player cards, right in your browser. No install needed — perfect for iPhone, iPad or any device. Hand it to guests and start playing in seconds.</p>
+        <div class="tags"><span class="tag">Browser</span><span class="tag">iOS friendly</span><span class="tag">No install</span></div>
+        <div class="app-links">
+          <a class="app-link solid" href="https://bingoningo.thecrazycat.com/game/" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="currentColor"/></svg>
+            Play now
+          </a>
+        </div>
+      </article>
+
+      <!-- QuizBlitz -->
+      <article class="app-card reveal" data-status="prod">
+        <div class="app-top">
+          <div class="app-icon"><img src="assets/quizblitz.png" alt="QuizBlitz icon" /></div>
+          <span class="badge prod"><span class="dot"></span>In production</span>
+        </div>
+        <h3>QuizBlitz</h3>
+        <p class="desc">A fast-paced Android quiz game. Race the clock, build answer streaks and climb the board — bite-sized rounds made for that "just one more" feeling.</p>
+        <div class="tags"><span class="tag">Android</span><span class="tag">Quiz game</span><span class="tag">Coming soon</span></div>
+        <div class="app-links">
+          <a class="app-link muted">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            Play Store — soon
+          </a>
+          <a class="app-link" href="https://play.google.com/store/apps/developer?id=thecrazycat" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            Follow on Play
+          </a>
+        </div>
+      </article>
+
+      <!-- RingReminder -->
+      <article class="app-card reveal" data-status="prod">
+        <div class="app-top">
+          <div class="app-icon ph" style="color:var(--accent)">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M18 8.5a6 6 0 10-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M10.2 20a2 2 0 003.6 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M4 4l16 16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </div>
+          <span class="badge prod"><span class="dot"></span>In production</span>
+        </div>
+        <h3>RingReminder</h3>
+        <p class="desc">Never miss an important call again. RingReminder gives you a gentle heads-up when your phone is on Do Not Disturb, silent or low volume — so the calls that matter don't slip by.</p>
+        <div class="tags"><span class="tag">Android</span><span class="tag">Utility</span><span class="tag">Coming soon</span></div>
+        <div class="app-links">
+          <a class="app-link muted">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            Play Store — soon
+          </a>
+          <a class="app-link" href="https://play.google.com/store/apps/developer?id=thecrazycat" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            Follow on Play
+          </a>
+        </div>
+      </article>
+
+      <!-- Ghost / room to expand (also a quick link to all your apps on Play) -->
+      <a class="ghost-card reveal" href="https://play.google.com/store/apps/developer?id=thecrazycat" target="_blank" rel="noopener" data-status="all">
+        <span class="plus">
+          <svg viewBox="0 0 24 24" fill="none" style="color:var(--accent)"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </span>
+        <b>More on the way</b>
+        <span>New apps land here.<br/>See us on Google Play.</span>
       </a>
-    </div>
 
-    <!-- CARDS VERSION -->
-    <div class="app-card">
-      <span class="app-badge badge-free">Cards Only</span>
-      <div class="app-title">BingoNingo Cards</div>
-      <p class="app-desc">
-        The lightweight cards-only version. Perfect for players who just need digital bingo cards.
-        Ad supported.
-      </p>
-      <a href="https://play.google.com/store/apps/details?id=com.jcat.bingoningo.app.free" class="app-link android">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M3.18 23.76a2 2 0 0 0 2.14-.22l11.76-6.78-3.3-3.3-10.6 10.3zm-1.1-20.6v17.68l9.56-8.84L2.08 3.16zm19.4 7.42-2.8-1.62-3.66 3.38 3.66 3.38 2.82-1.64a2 2 0 0 0 0-3.5zM5.32.46A2 2 0 0 0 3.18.22L13.74 10.6l3.3-3.3L5.32.46z"/>
-        </svg>
-        Download Cards Version
-      </a>
     </div>
-
-    <!-- WEB VERSION -->
-    <div class="app-card">
-      <span class="app-badge badge-web">Web</span>
-      <div class="app-title">Play in Browser</div>
-      <p class="app-desc">
-        Use the web version on iPhone, iPad, or any device.
-        Includes the full player cards experience — no install required.
-        (Caller features are available in the full Android app only.)
-      </p>
-      <a href="https://bingoningo.thecrazycat.com/game/" class="app-link web">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-        </svg>
-        Open Web Version
-      </a>
-    </div>
-
   </div>
 </section>
 
+<!-- ============ UPDATES / DEVLOG ============ -->
+<section class="updates" id="updates">
+  <div class="wrap">
+    <div class="updates-grid">
+      <div class="reveal">
+        <div class="section-head">
+          <span class="eyebrow">What's new</span>
+          <h2 style="font-size:clamp(28px,4vw,40px)">Latest updates</h2>
+        </div>
+        <!-- ============================================================
+             EDIT UPDATES  -  your "What's new" list.
+             To add an entry: copy one <div class="tl-item"> block,
+             paste it at the TOP (newest first), and change the date +
+             heading + text. Use class="tl-item soon" for a greyed-out
+             "coming up" item. These are written by hand - they do not
+             pull from the Play Store automatically.
+             ============================================================ -->
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-date">Jun 8, 2026</div>
+            <h4>BingoNingo Caller · resize fixes</h4>
+            <p>Improved the caller layout so it scales cleanly across every screen size.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">Jun 6, 2026</div>
+            <h4>BingoNingo Cards · display fix</h4>
+            <p>Fixed a sizing issue on larger screens for crisper, better-fitting cards.</p>
+          </div>
+          <div class="tl-item soon">
+            <div class="tl-date">Up next</div>
+            <h4>QuizBlitz enters beta</h4>
+            <p>First playable rounds are coming together — early testing soon.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="devlog-card reveal">
+        <span class="soon-pill">Devlog · coming soon</span>
+        <div class="big">Behind the apps — notes from the workshop.</div>
+        <p>We're starting a devlog to share what we're building, what broke, and what we learned along the way. Bingo logic, win-checking, the odd cat photo — it'll all be here.</p>
+        <a class="btn btn-ghost" href="#apps" style="align-self:flex-start">Browse the apps</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NEWSLETTER (removed) ============ -->
+
+<!-- ============ ABOUT ============ -->
+<section class="about" id="about">
+  <div class="wrap">
+    <div class="about-grid">
+      <div class="reveal">
+        <span class="eyebrow">The studio</span>
+        <!-- EDIT ABOUT  -  change the studio story in the two <p> blocks below. -->
+        <h2>One maker, one cat, lots of ideas.</h2>
+        <p>TheCrazyCat is a small independent developer in the UK, building Android apps that are playful to use and genuinely helpful. The goal is simple: apps that do one thing brilliantly, look good doing it, and respect your time.</p>
+        <p>BingoNingo was the first family — a full bingo system for clubs, pubs, charities and front-room games. QuizBlitz and RingReminder are next out of the workshop.</p>
+        <div class="signature">
+          <span class="mark logo-tile">C</span>
+          <div><b>TheCrazyCat</b><span>Indie Android studio ·  UK</span></div>
+        </div>
+      </div>
+      <div class="about-visual reveal">
+        <div class="about-tile"><b>5</b><span>apps live or in production</span></div>
+        <div class="about-tile"><b>90</b><span>ball UK bingo, done right</span></div>
+        <div class="about-tile"><b>0</b><span>dark patterns, ever</span></div>
+        <div class="about-tile"><b>∞</b><span>ideas in the backlog</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
 <footer>
-  <div class="footer-links">
-    <a href="https://bingoningo.thecrazycat.com/game/">Play Now</a>
-    <a href="https://bingoningo.thecrazycat.com/privacy.html">Privacy Policy</a>
-    <a href="mailto:bingoningo@thecrazycat.com">Contact</a>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="#top">
+          <span class="mark logo-tile">C</span>
+          <span>The<b>Crazy</b>Cat</span>
+        </a>
+        <p>Playful, useful Android apps — made by an indie studio in the UK.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Apps</h5>
+        <a href="https://play.google.com/store/apps/details?id=com.jcat.bingoningo.app" target="_blank" rel="noopener">BingoNingo Caller</a>
+        <a href="https://play.google.com/store/apps/details?id=com.jcat.bingoningo.app.free" target="_blank" rel="noopener">BingoNingo Cards</a>
+        <a href="https://bingoningo.thecrazycat.com/game/" target="_blank" rel="noopener">Play in browser</a>
+        <a href="#apps">QuizBlitz · soon</a>
+        <a href="#apps">RingReminder · soon</a>
+      </div>
+      <div class="foot-col">
+        <h5>Studio</h5>
+        <a href="#about">About</a>
+        <a href="#updates">Updates</a>
+        <a href="#updates">Devlog · soon</a>
+        <a href="https://bingoningo.thecrazycat.com" target="_blank" rel="noopener">BingoNingo site</a>
+      </div>
+      <!-- EDIT CONTACT  -  change your email + links here (and in the footer-bottom icons below). -->
+      <div class="foot-col">
+        <h5>Contact</h5>
+        <a href="mailto:hello@thecrazycat.com">dev@thecrazycat.com</a>
+        <a href="https://play.google.com/store/apps/developer?id=thecrazycat" target="_blank" rel="noopener">Play Store profile</a>
+        <a href="https://bingoningo.thecrazycat.com/privacy" target="_blank" rel="noopener">Privacy</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 TheCrazyCat. Made with curiosity in Derby, UK.</span>
+      <div class="socials">
+        <a href="https://play.google.com/store/apps/developer?id=thecrazycat" target="_blank" rel="noopener" aria-label="Google Play">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.4 13.9 12 3.6 21.6c-.3-.2-.5-.6-.5-1V3.4c0-.4.2-.8.5-1z"/><path d="M16.8 9.1 18.9 10c1.2.6 1.2 2.4 0 3l-2.1.9L14 12l2.8-2.9z"/></svg>
+        </a>
+        <a href="mailto:hello@thecrazycat.com" aria-label="Email">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="1.7"/></svg>
+        </a>
+      </div>
+    </div>
   </div>
-  <p class="footer-copy">
-    &copy; 2026 TheCrazyCat. BingoNingo is free to play. Contains optional in-app purchases. Contains advertising.
-  </p>
 </footer>
 
-<div class="scroll-indicator">
-  <span>Scroll</span>
-  <div class="chevron"></div>
-</div>
+<!-- ============ TWEAKS (React) ============ -->
+<div id="tweaks-root"></div>
 
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+
+<!-- ============ PAGE INTERACTIONS (vanilla) ============ -->
+<script>
+  // reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+  // app filter chips
+  const chips = document.querySelectorAll('.chip');
+  const cards = document.querySelectorAll('.app-grid > [data-status]');
+  chips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      chips.forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      const f = chip.dataset.filter;
+      cards.forEach((card) => {
+        const s = card.dataset.status;
+        const show = f === 'all' || s === f || s === 'all';
+        card.style.display = show ? '' : 'none';
+      });
+    });
+  });
+</script>
 </body>
 </html>
