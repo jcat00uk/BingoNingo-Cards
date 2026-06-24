@@ -1,6 +1,6 @@
 window.CHANGELOG = {
 
-  '20260624-171206': {
+  '20260624-171421': {
     changes: [
       { tag: 'fix', text: 'Fix display issues on Tablet screens', editions: 'all' },
       { tag: 'new', text: 'Add TTS speed settings', editions: 'full' },
