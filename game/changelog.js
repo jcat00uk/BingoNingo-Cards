@@ -1,6 +1,12 @@
 window.CHANGELOG = {
 
-  '20260624-194655': {
+  '20260625-071656': {
+    changes: [
+      { tag: 'update', text: 'Update How it works link and QR to point directly to the web cards game', editions: 'all' }
+    ]
+  },
+
+  '20260625-0714': {
     changes: [
       { tag: 'fix', text: 'Fix display issues on Tablet screens', editions: 'all' },
       { tag: 'new', text: 'Add TTS speed settings', editions: 'full' },
