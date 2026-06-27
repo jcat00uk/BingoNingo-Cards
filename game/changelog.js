@@ -1,6 +1,6 @@
 window.CHANGELOG = {
 
-  '20260625-071656': {
+  '20260627-161627': {
     changes: [
       { tag: 'update', text: 'Update How it works link and QR to point directly to the web cards game', editions: 'all' }
     ]

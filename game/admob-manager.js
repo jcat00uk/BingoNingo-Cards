@@ -132,6 +132,7 @@
     // the call was accepted — not that the ad was actually displayed.
     plugin.addListener('interstitialAdOpened', function() {
       _adReady = false;
+      if (window.Analytics) window.Analytics.adShown();
     });
 
     plugin.addListener('interstitialAdDismissed', function() {
@@ -173,6 +174,7 @@
         console.warn('[AdMobManager] consent info failed:', e);
       })
       .then(function() {
+        if (window.Analytics) window.Analytics.enable();
         plugin.initialize({
           testingDevices: TEST_DEVICE_IDS,
           initializeForTesting: (typeof APP_BUILD_MODE === 'undefined' || APP_BUILD_MODE !== 'release')
