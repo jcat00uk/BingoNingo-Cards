@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Player Bingo Cards</title>
-  <script>!function(){try{var t=JSON.parse(localStorage.getItem('bingoningo_theme_active'));if(t&&typeof t==='object'){var r=document.documentElement;Object.keys(t).forEach(function(k){r.style.setProperty(k,t[k]);});}}catch(e){}}();</script>
+  <script>!function(){var r=document.documentElement,bg='#121212';try{var t=JSON.parse(localStorage.getItem('bingoningo_theme_active'));if(t&&typeof t==='object'){Object.keys(t).forEach(function(k){r.style.setProperty(k,t[k]);});if(t['--bg-page'])bg=t['--bg-page'];}}catch(e){}r.style.backgroundColor=bg;}();</script>
   <link rel="stylesheet" href="playercard.css?v=.0.0">
   <script>
     function setRealVh(){document.documentElement.style.setProperty('--real-vh',window.innerHeight+'px');}
@@ -300,6 +300,7 @@
 <script src="capacitor.js" defer></script>
 <script src="analytics.js?v=.0.0"></script>
 <script src="admob-manager.js?v=.0.0" defer></script>
+<script src="ad-debug-panel.js?v=.0.0" defer></script>
 <script src="iap-manager.js?v=.0.0" defer></script>
 <script src="cards.js?v=.0.0" defer></script>
 <script src="theme-presets.js?v=.0.0" defer></script>

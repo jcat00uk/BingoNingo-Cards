@@ -204,7 +204,7 @@ input, textarea {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
   margin-top: 12px;
   width: 100%;
   padding-bottom: max(100px, calc(env(safe-area-inset-bottom, 0px) + 80px));
@@ -219,13 +219,16 @@ input, textarea {
 /* 5. BINGO CARD STYLING         */
 /* ============================= */
 
+/* Nearly edge to edge on phones so the 9 columns get as much width as possible (bigger
+   tap targets); capped on tablets, where cells and numbers grow with the screen instead */
 .card {
-  border: 2px dashed var(--border);  /* page UI theme */
-  padding: 8px;
-  width: 90%;
-   max-width: min(90vw, 480px);  /* bigger on tablet, still capped */
+  border: 1px dashed var(--border);  /* page UI theme */
+  padding: 4px 2px;
+  width: 100%;
+  max-width: 640px;
+  box-sizing: border-box;
   background: linear-gradient(145deg, var(--card-bg), var(--card-bg-light));
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
 }
 
@@ -235,8 +238,8 @@ input, textarea {
   align-items: center;
   justify-content: center;
   position: relative;
-  margin: 4px 0 8px 0;
-  font-size: 20px;
+  margin: 0 0 2px 0;
+  font-size: clamp(16px, 3vw, 22px);
   color: var(--card-title);
   text-shadow: 0 0 5px var(--card-title);
 }
@@ -343,11 +346,12 @@ body.big-card-active .big-card-initials {
   border: 1px solid var(--border);   /* page UI theme */
   aspect-ratio: 1 / 1;
   width: auto;
-  height: clamp(30px, calc((100vh - 380px) / 9), 44px);
-  height: clamp(30px, calc((var(--real-vh, 100svh) - 380px) / 9), 44px);
+  /* 46-64px rows by screen width, but never taller than lets 3 cards fit the screen height */
+  height: max(30px, min(clamp(46px, 8.5vw, 64px), calc((100vh - 260px) / 9.5)));
+  height: max(30px, min(clamp(46px, 8.5vw, 64px), calc((var(--real-vh, 100svh) - 260px) / 9.5)));
   text-align: center;
   font-weight: bold;
-  font-size: 18px;
+  font-size: clamp(20px, 4.5vw, 30px);
   cursor: pointer;
   transition: all 0.3s;
   border-radius: 8px;

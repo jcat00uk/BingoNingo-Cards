@@ -64,10 +64,26 @@
     }
   }
 
+  // Shows a short message on a button for 3 s, then puts its normal label back.
+  // (The button itself, because the player page has no toast.)
+  function flashButton(id, text) {
+    var btn = document.getElementById(id);
+    if (!btn) return;
+    btn.textContent = text;
+    btn.disabled    = true;
+    setTimeout(updateUI, 3000);
+  }
+
+  // RevenueCat reports the user backing out of the purchase sheet as an error
+  function isUserCancel(e) {
+    return !!(e && (e.userCancelled || e.code === '1' || e.code === 1 || /cancel/i.test(e.message || '')));
+  }
+
   function purchaseRemoveAds() {
     console.log('[IAPManager] purchaseRemoveAds: ready=' + _ready + ' plugin=' + (!!_plugin));
     if (!_ready || !_plugin) {
       console.warn('[IAPManager] purchaseRemoveAds: not ready yet');
+      flashButton('removeAdsBtn', 'Store not ready — try again');
       return;
     }
     var removeBtn = document.getElementById('removeAdsBtn');
@@ -92,7 +108,8 @@
       })
       .catch(function(e) {
         console.warn('[IAPManager] purchaseRemoveAds failed:', JSON.stringify(e));
-        updateUI();
+        if (isUserCancel(e)) updateUI();
+        else flashButton('removeAdsBtn', 'Purchase failed — try again');
       });
   }
 
@@ -100,6 +117,7 @@
     console.log('[IAPManager] restorePurchases: ready=' + _ready + ' plugin=' + (!!_plugin));
     if (!_ready || !_plugin) {
       console.warn('[IAPManager] restorePurchases: not ready yet');
+      flashButton('restorePurchasesBtn', 'Store not ready — try again');
       return;
     }
     var restoreBtn = document.getElementById('restorePurchasesBtn');
@@ -107,11 +125,11 @@
 
     _plugin.restorePurchases()
       .then(function(result) {
-        applyEntitlements(result.customerInfo);
+        if (!applyEntitlements(result.customerInfo)) flashButton('restorePurchasesBtn', 'No purchase found');
       })
       .catch(function(e) {
         console.warn('[IAPManager] restorePurchases failed:', JSON.stringify(e));
-        updateUI();
+        flashButton('restorePurchasesBtn', 'Restore failed — try again');
       });
   }
 

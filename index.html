@@ -40,6 +40,576 @@
 <title>TheCrazyCat — playful apps that just work</title>
 <meta name="description" content="TheCrazyCat is an indie studio making playful, useful Android apps — including BingoNingo, QuizBlitz, RingReminder and My Messages." />
 <link rel="stylesheet" href="styles.css" />
+<style>
+/* ============ PLAYTHROUGHS: app-demo engine CSS ============ */
+/* app-demo: stage, device frames, controls and chapters. Taken from the QuizBlitz website demos.
+   Paste into the page's <style>. Set the --demo-* tokens to the page's own colours; the app's own
+   tokens (screen colours, fonts) go in a separate block next to the screen CSS. */
+:root {
+  --demo-accent: #534AB7;      /* play button, scrub fill, active chapter */
+  --demo-focus: #f59e0b;       /* focus ring, chapter name */
+  --demo-panel: #1e1e38;       /* control bar, perspective toggle */
+  --demo-panel2: #16162a;      /* caption box, chapter chips, scrub track */
+  --demo-line: rgba(255,255,255,0.08);
+  --demo-text: #e8e8f0;
+  --demo-muted: #8f8fa8;
+  --demo-screen-bg: #141218;   /* the app's own background, behind each screen */
+}
+
+/* [hidden] must beat any element's own display rule (it bit the Play again overlay). */
+[hidden] { display: none !important; }
+
+.demo-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 40px; align-items: start; }
+
+/* Perspective toggle: shown only when the stage is too narrow for every device */
+.persp { display: none; padding: 4px; border-radius: 12px; background: var(--demo-panel); border: 1px solid var(--demo-line); margin-bottom: 16px; }
+.persp.on { display: inline-flex; }
+.persp button { font: inherit; font-size: 13px; font-weight: 600; color: var(--demo-muted); background: none; border: 0; padding: 8px 16px; border-radius: 9px; cursor: pointer; }
+.persp button[aria-pressed="true"] { background: var(--demo-accent); color: #fff; }
+
+/* Stage: devices sit in .stage-inner at natural size, fit() scales the whole row to the stage width */
+.stage { position: relative; width: 100%; overflow: hidden; }
+.stage-inner { display: flex; gap: 26px; width: max-content; align-items: center; transform-origin: 0 0; }
+.stage-inner.one .ph-wrap.off { display: none; }
+.ph-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ph-lbl { font-size: 13px; font-weight: 700; color: var(--demo-text); }
+.ph-lbl small { font-weight: 700; color: var(--demo-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-right: 6px; }
+.ph-lbl.host small { color: var(--demo-focus); }
+
+/* Phone frame: 272 x 590 screen, 24px status bar, content box .pb */
+.phone { padding: 9px; border-radius: 38px; background: #05040d; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
+.scr { position: relative; width: 272px; height: 590px; border-radius: 30px; overflow: hidden; font-size: 12px; line-height: 1.35; background: var(--demo-screen-bg); }
+.sbar { position: absolute; top: 0; left: 0; right: 0; height: 24px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 10.5px; font-weight: 700; z-index: 20; }
+.pb { position: absolute; inset: 24px 0 0 0; }
+.pb.full { inset: 0; }               /* screens that draw behind the status bar (lock screen, home screen) */
+
+/* TV frame: 16:9, sized in cqw so the screen CSS scales with it */
+.tvwrap { display: flex; flex-direction: column; align-items: center; }
+.tvbez { padding: 10px; border-radius: 14px; background: #05040d; border: 1px solid rgba(255,255,255,.12); box-shadow: 0 24px 60px rgba(0,0,0,.55); }
+.tvstand { width: 120px; height: 26px; background: linear-gradient(#1a1a26, #0b0b12); clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%); }
+.tvs { position: relative; width: 680px; aspect-ratio: 16 / 9; container-type: inline-size; overflow: hidden; border-radius: 4px; background: var(--demo-screen-bg); }
+/* TV + phone: the phone tucks in small at the TV's bottom right */
+.stage-inner.tvl { gap: 0; align-items: flex-end; }
+.stage-inner.tvl > .ph-wrap + .ph-wrap { margin-left: 18px; margin-right: -82px; transform: scale(.72); transform-origin: 0 100%; }
+.stage-inner.one > .ph-wrap + .ph-wrap { transform: none; margin: 0; }
+
+/* Scene helpers for screen() output */
+.scn { height: 100%; display: flex; flex-direction: column; position: relative; }
+.scn.fresh { animation: scnIn .35s ease-out both; }
+@keyframes scnIn { from { opacity: 0; } to { opacity: 1; } }
+.pop { animation: popIn .45s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes popIn { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.tap { position: absolute; left: 50%; top: 50%; width: 24px; height: 24px; margin: -12px; border-radius: 50%; background: rgba(255,255,255,.8); animation: tap .6s ease-out forwards; pointer-events: none; z-index: 30; }
+@keyframes tap { from { transform: scale(.4); opacity: .9; } to { transform: scale(5); opacity: 0; } }
+
+/* Tap targets in interactive demos (data-act): real buttons, the screen CSS styles them */
+.pb button[data-act] { font: inherit; color: inherit; cursor: pointer; }
+.pb button[data-act]:focus-visible { outline: 2px solid var(--demo-focus); outline-offset: 2px; }
+
+/* Play again overlay */
+.end-ov { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(10,8,25,.55); backdrop-filter: blur(2px); z-index: 30; }
+.again { font: inherit; font-size: 17px; font-weight: 800; padding: 14px 28px; border-radius: 14px; border: 0; background: var(--demo-accent); color: #fff; cursor: pointer; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
+
+/* Controls */
+.ctl { display: flex; align-items: center; gap: 14px; margin-top: 22px; padding: 12px 16px; border-radius: 16px; background: var(--demo-panel); border: 1px solid var(--demo-line); }
+.ctl-btn { font: inherit; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: 0; background: var(--demo-accent); color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.ctl-btn.sec { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--demo-text); width: 38px; height: 38px; font-size: 15px; }
+.ctl-btn:focus-visible, .persp button:focus-visible, .chap:focus-visible, .again:focus-visible { outline: 2px solid var(--demo-focus); outline-offset: 2px; }
+.scrub { position: relative; flex: 1; min-width: 0; height: 30px; display: flex; align-items: center; }
+.scrub input { width: 100%; appearance: none; -webkit-appearance: none; height: 6px; border-radius: 6px; background: var(--demo-panel2); cursor: pointer; }
+.scrub input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid var(--demo-accent); }
+.scrub input::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid var(--demo-accent); }
+.ticks { position: absolute; left: 0; right: 0; top: 50%; height: 0; pointer-events: none; }
+.ticks i { position: absolute; top: -5px; width: 2px; height: 10px; background: rgba(255,255,255,.4); border-radius: 1px; }
+.time { font-size: 13px; color: var(--demo-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Chapter caption and chips */
+.chap-now { padding: 16px 18px; border-radius: 14px; background: var(--demo-panel2); border: 1px solid var(--demo-line); min-height: 108px; }
+.chap-now b { display: block; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--demo-focus); }
+.chap-now .tag { font-size: 10px; letter-spacing: .05em; text-transform: none; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--demo-accent); color: var(--demo-text); vertical-align: 2px; }
+.chap-now span { font-size: 16px; color: var(--demo-text); }
+.chaps { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.chap { font: inherit; font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 99px; background: var(--demo-panel2); border: 1px solid var(--demo-line); color: var(--demo-muted); cursor: pointer; }
+.chap.on { color: #fff; border-color: var(--demo-accent); background: color-mix(in srgb, var(--demo-accent) 30%, transparent); }
+
+@media (max-width: 900px) {
+  .demo-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .chap-now { min-height: 0; }
+}
+@media (max-width: 640px) {
+  .ctl { gap: 10px; padding: 10px; }
+  .time { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scn.fresh, .pop, .tap { animation: none !important; }
+}
+  /* BingoNingo screens (hero demo). Colours sampled from the web build: style.css + playercard.css. */
+  .bnz .scr { background: #121212; color: #eeeeee; font-family: Arial, Helvetica, sans-serif; }
+  .bnz .sbar { color: #eeeeee; }
+  .bnz .pb * { box-sizing: border-box; }
+  .bnz .bn { height: 100%; display: flex; flex-direction: column; gap: 7px; padding: 6px 8px 8px; position: relative; }
+  .bnz .bn-top { display: flex; align-items: center; gap: 6px; height: 26px; flex: none; }
+  .bnz .bi { width: 22px; height: 22px; border-radius: 6px; background: #2a2a2a; border: 1px solid #444444; flex: none; display: grid; place-items: center; font: bold 11px Arial; color: #eeeeee; }
+  .bnz .bi.r { border-radius: 50%; }
+  .bnz .bi.g { border-color: #22a355; background: transparent; }
+  .bnz .logo { font: bold 15px Arial; color: #ff4d4d; text-shadow: 0 0 8px rgba(255,60,60,.7); }
+  .bnz .lingo { margin-left: auto; font-size: 10px; color: #ff6666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
+  .bnz .bn-row { display: flex; align-items: center; gap: 5px; flex: none; }
+  .bnz .cb { position: relative; flex: 1; height: 32px; border-radius: 5px; background: #2a2a2a; color: #888888; font-size: 9px; line-height: 1.1; display: grid; place-items: center; text-align: center; border: 0; padding: 0; overflow: hidden; }
+  .bnz .cb.lit { background: #444444; color: #eeeeee; }
+  .bnz .cb.red { background: #cc0000; color: #ffffff; }
+  .bnz .ball { width: 44px; height: 44px; border-radius: 50%; background: #ffcc00; color: #cc0000; font: bold 21px Arial; display: grid; place-items: center; box-shadow: 0 0 12px rgba(255,204,0,.55); flex: none; }
+  .bnz .strip { height: 26px; background: #2a2a2a; border-radius: 3px; display: flex; align-items: center; justify-content: flex-end; gap: 3px; padding: 0 4px; overflow: hidden; flex: none; }
+  .bnz .strip span { width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center; font: bold 8px Arial; background: #333333; flex: none; }
+  .bnz .strip span.last { background: #3d9df5; color: #ffffff; }
+  .bnz .board { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 3px; padding: 0 2px; flex: none; }
+  .bnz .bc { height: 25px; border-radius: 50%; display: grid; place-items: center; font: bold 9.5px Arial; background: #333333; color: #eeeeee; }
+  .bnz .bc.e { background: #262626; }
+  .bnz .bc.on { background: #ff6666; color: #ffffff; }
+  .bnz .bc.last { background: #3d9df5; color: #ffffff; }
+  .bnz .bstat { display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; color: #ff6666; padding: 0 2px; flex: none; }
+  .bnz .bstat i { font-style: italic; }
+  .bnz .nextwin { text-align: right; font-size: 9px; color: #ff6666; font-weight: bold; padding-right: 2px; margin-top: -4px; flex: none; }
+  .bnz .foot { display: flex; gap: 5px; align-items: center; margin-top: auto; flex: none; }
+  .bnz .foot .cb { flex: none; width: 56px; height: 36px; }
+  .bnz .foot .cb.undo { width: 28px; background: #444444; color: #eeeeee; font-size: 12px; }
+  .bnz .foot .next { flex: 1; width: auto; font-size: 12px; background: #5a0000; color: #aa7777; }
+  .bnz .foot .next.go { background: #cc0000; color: #ffffff; box-shadow: 0 0 10px rgba(255,0,0,.5); }
+  .bnz .foot .cw.go { background: #1e3d27; color: #b8ffd0; box-shadow: 0 0 0 1px #44dd77, 0 0 12px rgba(68,221,119,.6); animation: bnGlow 1s ease-in-out infinite alternate; }
+  @keyframes bnGlow { to { box-shadow: 0 0 0 1px #44dd77, 0 0 20px rgba(68,221,119,.9); } }
+
+  /* sheets and dialogs */
+  .bnz .dim { position: absolute; inset: 0; background: rgba(0,0,0,.62); padding: 18px 8px 8px; z-index: 5; display: flex; flex-direction: column; }
+  .bnz .sheet { background: #1e1e1e; border: 1px solid #444444; border-radius: 10px; padding: 12px 10px; display: flex; flex-direction: column; gap: 8px; font-size: 9px; }
+  .bnz .sheet h4 { margin: 0; text-align: center; font: bold 14px Arial; }
+  .bnz .sub { text-align: center; font-size: 8.5px; color: #aaaaaa; margin-top: -4px; }
+  .bnz .sub.red { color: #ff6666; font-weight: bold; font-size: 10px; }
+  .bnz .pill-row { display: flex; gap: 5px; justify-content: center; }
+  .bnz .pill { position: relative; overflow: hidden; background: #444444; border-radius: 4px; padding: 4px 8px; font-size: 8.5px; }
+  .bnz .pill.dis { color: #888888; }
+  .bnz .panel { background: #2a2a2a; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .bnz .ph { text-align: center; font-weight: bold; color: #bbbbbb; font-size: 8px; letter-spacing: 1px; }
+  .bnz .opt { display: flex; justify-content: space-between; align-items: center; }
+  .bnz .tg { width: 26px; height: 14px; border-radius: 7px; background: #555555; position: relative; transition: background .2s; }
+  .bnz .tg::after { content: ''; position: absolute; left: 2px; top: 2px; width: 10px; height: 10px; border-radius: 50%; background: #bbbbbb; transition: left .2s; }
+  .bnz .tg.on { background: #22a355; }
+  .bnz .tg.on::after { left: 14px; background: #ffffff; }
+  .bnz .ac1 { display: flex; gap: 7px; font-size: 8px; color: #bbbbbb; }
+  .bnz .codein { display: flex; gap: 4px; align-items: center; }
+  .bnz .inp { flex: 1; min-height: 22px; background: #1a1a1a; border: 1px solid #555555; border-radius: 4px; padding: 5px; font: bold 9px monospace; color: #eeeeee; }
+  .bnz .inp.ini { flex: none; width: 34px; text-align: center; border-color: #dddddd; }
+  .bnz .inp.ph0 { color: #666666; }
+  .bnz .plus { position: relative; overflow: hidden; width: 22px; height: 22px; border-radius: 4px; background: #22a355; color: #ffffff; display: grid; place-items: center; font-weight: bold; font-size: 12px; flex: none; }
+  .bnz .coderow { display: flex; gap: 4px; align-items: center; font: bold 8px monospace; background: #1a1a1a; border-radius: 4px; padding: 4px; }
+  .bnz .coderow u { text-decoration: underline; }
+  .bnz .coderow b { background: #22a355; border-radius: 3px; padding: 1px 3px; font-weight: bold; }
+  .bnz .cardrow { background: #333333; border-radius: 3px; text-align: center; padding: 5px; font: bold 10px Arial; color: #dddddd; }
+  .bnz .cardrow.sel { background: #44aa44; border: 1px solid #99ee99; color: #ffffff; padding: 4px; }
+  .bnz .toast { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: 190px; background: #22a355; color: #ffffff; font-size: 9px; border-radius: 9px; padding: 7px 10px; text-align: center; z-index: 8; }
+  .bnz .dlg { margin: auto 6px; background: #1e1e1e; border: 1px solid #444444; border-radius: 10px; padding: 14px 12px; display: flex; flex-direction: column; gap: 8px; font-size: 9px; }
+  .bnz .dlg h4 { margin: 0 0 2px; font: bold 13px Arial; }
+  .bnz .dlg .warn { border: 1px solid #883333; background: #2a1414; color: #ff7777; border-radius: 6px; padding: 7px; font-size: 8px; }
+  .bnz .dlg .kv { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; border-radius: 5px; padding: 7px; }
+  .bnz .dlg .kv em { font-style: normal; font-size: 8px; border-radius: 99px; padding: 1px 7px; background: #1e3d27; color: #77ee99; border: 1px solid #22a355; }
+  .bnz .dlg .acts { display: flex; gap: 6px; margin-top: 4px; }
+  .bnz .dlg .acts span { position: relative; overflow: hidden; flex: 1; text-align: center; padding: 8px; border-radius: 6px; border: 1px solid #555555; }
+  .bnz .dlg .acts .go { background: #22a355; border-color: #22a355; color: #ffffff; }
+  .bnz .vbtn { position: relative; overflow: hidden; align-self: center; background: #2a2a2a; border: 1px solid #ff6666; border-radius: 4px; padding: 5px 14px; font: bold 10px Arial; color: #ff6666; }
+  .bnz .vbtn.ok { background: #22a355; border-color: #66dd88; color: #ffffff; }
+  .bnz .vhead { display: flex; justify-content: space-between; font-size: 9px; font-weight: bold; }
+  .bnz .vhead em { font-style: normal; border: 1px solid #ff6666; color: #ff6666; border-radius: 3px; padding: 0 4px; font-size: 8px; }
+  .bnz .vgrid { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 2px; }
+  .bnz .vgrid span { height: 14px; display: grid; place-items: center; font: bold 7.5px Arial; border-radius: 2px; color: #777777; }
+  .bnz .vgrid span.y { background: #ffcc00; color: #222222; }
+  .bnz .vgrid span.lc { outline: 2px solid #3d9df5; }
+  .bnz .vstat { display: flex; justify-content: space-between; font-size: 8px; color: #aaaaaa; }
+  .bnz .vstat b { color: #ff6666; font-weight: normal; }
+  .bnz .bigbtn { position: relative; overflow: hidden; background: #ff6666; color: #ffffff; text-align: center; border-radius: 6px; padding: 9px; font-size: 10px; }
+
+  /* win overlays */
+  .bnz .win { position: absolute; inset: 0; z-index: 6; background: rgba(0,0,0,.62); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; overflow: hidden; }
+  .bnz .win .big { font: 900 42px/0.95 Arial; color: #ffcc00; text-shadow: 0 0 14px rgba(255,140,0,.9); }
+  .bnz .win .cd { font: 900 22px Arial; color: #ffcc00; text-shadow: 0 0 10px rgba(255,140,0,.8); }
+  .bnz .win .mini { margin-top: 8px; background: #2a2a2a; border: 1px solid #555555; border-radius: 6px; padding: 6px 12px; font-size: 9px; }
+  .bnz .win .okb { position: relative; overflow: hidden; margin-top: 6px; background: #444444; border-radius: 4px; padding: 4px 18px; font-size: 9px; }
+  .bnz .confetti i { position: absolute; top: -12px; width: 6px; height: 10px; animation: bnFall 2.6s linear infinite; }
+  @keyframes bnFall { to { transform: translateY(640px) rotate(540deg); } }
+
+  /* player */
+  .bnz .pbtn { position: relative; overflow: hidden; width: 50px; height: 34px; border-radius: 5px; background: #2a2a2a; color: #666666; font-size: 9px; line-height: 1.1; display: grid; place-items: center; text-align: center; flex: none; }
+  .bnz .pbtn.lit { background: #444444; color: #eeeeee; }
+  .bnz .pbtn.ng { margin-left: auto; }
+  .bnz .pbtn.ng.lit { box-shadow: 0 0 0 2px #cc3333; }
+  .bnz .steps { margin: 18px 10px 0; background: #1a1a1a; border: 1px solid #333333; border-radius: 8px; padding: 14px 12px; display: flex; flex-direction: column; gap: 8px; font-size: 10px; color: #bbbbbb; }
+  .bnz .steps b { color: #777777; font-weight: normal; margin-right: 8px; }
+  .bnz .pcard { background: linear-gradient(160deg, #2a2a2a, #1a1a1a); border: 1px dashed #444444; border-radius: 7px; padding: 5px 5px 6px; position: relative; flex: none; }
+  .bnz .pcard h5 { margin: 0; display: flex; gap: 30px; font: bold 11.5px Arial; color: #ff6666; padding: 0 2px 4px; }
+  .bnz .pgrid { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); border-top: 1px solid #3a3a3a; border-left: 1px solid #3a3a3a; }
+  .bnz .pc { position: relative; height: 27px; display: grid; place-items: center; font: bold 11.5px Arial; color: #eeeeee; background: #222222; border: 0; border-right: 1px solid #3a3a3a; border-bottom: 1px solid #3a3a3a; padding: 0; overflow: visible; }
+  .bnz .pc.d { background: #ff4d4d; color: #ffffff; border-radius: 4px; }
+  .bnz .pc.due { z-index: 2; box-shadow: inset 0 0 0 2px #ffcc00; animation: bnDue .8s ease-in-out infinite alternate; }
+  @keyframes bnDue { to { box-shadow: inset 0 0 0 2px #ffcc00, 0 0 10px 2px rgba(255,204,0,.7); } }
+  .bnz .pc .tap { z-index: 3; }
+  .bnz .bingo { position: absolute; left: 0; right: 0; top: 74px; z-index: 6; text-align: center; font: 900 38px Arial; transform: rotate(-6deg); animation: bnFlash .6s steps(4) infinite; pointer-events: none; }
+  @keyframes bnFlash {
+    0% { color: limegreen; text-shadow: 0 0 10px limegreen, 0 0 20px limegreen; }
+    25% { color: cyan; text-shadow: 0 0 10px cyan, 0 0 20px cyan; }
+    50% { color: yellow; text-shadow: 0 0 10px yellow, 0 0 20px yellow; }
+    75% { color: magenta; text-shadow: 0 0 10px magenta, 0 0 20px magenta; }
+  }
+  .bnz .qp { display: flex; gap: 8px; justify-content: center; }
+  .bnz .qp span { position: relative; overflow: hidden; width: 24px; height: 24px; border-radius: 50%; background: #333333; display: grid; place-items: center; }
+  .bnz .qp span.on { background: #555555; box-shadow: 0 0 0 1px #ffffff; }
+  .bnz .qr { width: 126px; height: 126px; background: #ffffff; border-radius: 6px; padding: 9px; display: grid; grid-template-columns: repeat(21, 1fr); align-self: center; }
+  .bnz .qr i { display: block; }
+  .bnz .qr i.k { background: #000000; }
+  .bnz .code { align-self: center; background: #111111; border-radius: 4px; padding: 5px 10px; font: bold 11px monospace; letter-spacing: 1px; }
+  @media (prefers-reduced-motion: reduce) {
+    .bnz .confetti i, .bnz .pc.due, .bnz .foot .cw.go, .bnz .bingo { animation: none !important; }
+    .bnz .bingo { color: limegreen; }
+  }
+  /* QuizBlitz screens (from thecrazycat/QuizBlitz), scoped to .qbz */
+  .qbz .scr {
+    color-scheme: dark;
+    --brand: #534AB7;
+    --brand-light: #AFA9EC;
+    --bg: #0f0f1a;
+    --bg2: #16162a;
+    --bg3: #1e1e38;
+    --text: #e8e8f0;
+    --muted: #8f8fa8;
+    --correct: #29B86D;
+    --accent: #f59e0b;
+    --radius: 16px;
+    /* in-app tokens (css/main.css + recordings) for the demo phones */
+    --g: #F2B90A;
+    --g-bg: rgba(242,185,10,0.16);
+    --g-bd: rgba(242,185,10,0.5);
+    --night: #100e27;
+    --band: #17153a;
+    --card: #1c1944;
+    --card2: #232052;
+    --bd: rgba(180,170,230,0.2);
+    --tx: #F4F2FF;
+    --tx2: #B7B0E0;
+    --tx3: #7B74A8;
+    --ok: #29D98C;
+    --ok-bg: rgba(41,217,140,0.13);
+    --ok-bd: rgba(41,217,140,0.55);
+    --bad: #FF5C7A;
+    --bad-bg: rgba(255,92,122,0.14);
+    --bad-bd: rgba(255,92,122,0.5);
+    --amb: #FFAE42;
+    --amb-bg: rgba(255,174,66,0.16);
+    --pur: #8b5cf6;
+    --pur-bg: rgba(139,92,246,0.25);
+    --pur-tx: #c9b8ff;
+    --pink: #ff5f86;
+    color: var(--tx); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(90% 40% at 0% 0%, rgba(58,36,114,.6), transparent 70%), radial-gradient(80% 40% at 100% 100%, rgba(52,214,224,.12), transparent 70%), var(--night); }
+  .qbz .sbar { color: var(--tx); }
+  .qbz .pb *, .qbz .pb *::before, .qbz .pb *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  .qbz .scn { height: 100%; display: flex; flex-direction: column; position: relative; }
+  .qbz .scn.fresh > .body, .qbz .scn.fresh > .gb, .qbz .scn.fresh > .hbar { animation: scnIn .35s ease-out both; }
+  @keyframes scnIn { from { opacity: 0; } to { opacity: 1; } }
+  .qbz .body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+  .qbz .body > *, .qbz [data-tw="scroll"] > * { flex-shrink: 0; }
+  .qbz .body > [data-tw="scroll"] { flex-shrink: 1; }
+  .qbz .grow { flex: 1; }
+  .qbz .pop { animation: popIn .45s cubic-bezier(.2,1.4,.4,1) both; }
+  @keyframes popIn { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* bars */.qbz .gb { background: var(--band); padding: 8px 12px 7px; border-bottom: 1px solid var(--bd); }
+  .qbz .gb-row { display: flex; align-items: center; gap: 6px; }
+  .qbz .gb-t { font-weight: 800; font-size: 12px; }
+  .qbz .gb-s { font-size: 10px; color: var(--tx3); }
+  .qbz .gb-l { flex: 1; min-width: 0; }
+  .qbz .spill { background: var(--g); color: #1a1400; font-weight: 900; font-size: 10px; padding: 2px 8px; border-radius: 99px; font-variant-numeric: tabular-nums; }
+  .qbz .bpill { background: var(--g-bg); color: var(--g); border: 1px solid var(--g-bd); font-weight: 800; font-size: 9.5px; padding: 1px 7px; border-radius: 99px; white-space: nowrap; }
+  .qbz .xpill { background: var(--pur-bg); color: var(--pur-tx); font-weight: 800; font-size: 9.5px; padding: 1px 7px; border-radius: 99px; white-space: nowrap; }
+  .qbz .ring { position: relative; width: 30px; height: 30px; flex-shrink: 0; }
+  .qbz .ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .qbz .ring circle { fill: none; stroke-width: 3; }
+  .qbz .ring .bgc { stroke: rgba(41,217,140,.18); }
+  .qbz .ring .fgc { stroke: var(--ok); stroke-dasharray: 81.7; stroke-linecap: round; }
+  .qbz .ring span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; color: var(--ok); }
+  .qbz .prog { height: 3px; border-radius: 3px; background: rgba(255,255,255,.08); margin-top: 6px; overflow: hidden; }
+  .qbz .prog i { display: block; height: 100%; background: var(--amb); }
+  .qbz .hbar { background: var(--band); padding: 9px 12px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--bd); min-height: 40px; }
+  .qbz .hbar .t { flex: 1; min-width: 0; font-weight: 800; font-size: 12px; color: var(--tx2); }
+  .qbz .hbar .t.big { color: var(--tx); font-size: 14px; }
+  .qbz .hbar .t b { color: var(--g); }
+  .qbz .hbar .cnt { font-size: 10px; color: var(--tx2); }
+  .qbz .joinpill { font-size: 9.5px; font-weight: 800; color: var(--g); border: 1px solid var(--g-bd); padding: 1px 6px; border-radius: 99px; }
+  .qbz .htimer { font-weight: 900; font-size: 20px; color: var(--g); font-variant-numeric: tabular-nums; min-width: 24px; text-align: right; }
+  .qbz .okpill { font-size: 9.5px; font-weight: 800; color: var(--ok); background: var(--ok-bg); padding: 1px 6px; border-radius: 99px; }
+  .qbz .gpill { font-size: 9.5px; font-weight: 800; color: #1a1400; background: var(--g); padding: 2px 8px; border-radius: 99px; }
+
+  /* question */.qbz .meta { display: flex; align-items: center; gap: 6px; }
+  .qbz .diff { font-size: 9px; font-weight: 900; background: var(--g); color: #3a2a00; padding: 1px 6px; border-radius: 4px; letter-spacing: .3px; }
+  .qbz .cat { font-size: 9.5px; color: var(--tx3); }
+  .qbz .cattag { font-size: 9.5px; color: var(--tx2); border: 1px solid var(--bd); background: rgba(255,255,255,.04); border-radius: 99px; padding: 1px 8px; }
+  .qbz .qt { font-size: 14px; font-weight: 800; line-height: 1.32; text-wrap: balance; }
+  .qbz .qband { background: rgba(10,8,30,.55); margin: 0 -12px; padding: 4px 12px 12px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--bd); }
+  .qbz .ans { display: flex; flex-direction: column; gap: 6px; }
+  .qbz .a { position: relative; overflow: hidden; display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 11px; border: 1px solid var(--bd); background: rgba(20,17,46,.85); font-size: 12px; font-weight: 500; }
+  .qbz .a .L { width: 20px; height: 20px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; flex-shrink: 0; }
+  .qbz .L0 { background: #4f6bff; } .qbz .L1 { background: #ef4b5f; } .qbz .L2 { background: #f5a524; } .qbz .L3 { background: #22b573; }
+  .qbz .a.sel { background: var(--g); border-color: #ffe08a; color: #1a1400; font-weight: 700; box-shadow: 0 0 0 2px rgba(242,185,10,.35); }
+  .qbz .a.dim { opacity: .4; }
+  .qbz .a.ok { background: var(--ok-bg); border-color: var(--ok-bd); color: var(--ok); }
+  .qbz .a.no { background: var(--bad-bg); border-color: var(--bad-bd); color: var(--bad); }
+  .qbz .ha .a { padding: 7px 10px; background: rgba(23,20,58,.9); border-color: rgba(140,130,220,.35); }
+  .qbz .ha .a .HL { font-weight: 800; width: 12px; }
+  .qbz .HL0 { color: #6f86ff; } .qbz .HL1 { color: #ff6b7d; } .qbz .HL2 { color: #ffb84d; } .qbz .HL3 { color: #3fd08f; }
+  .qbz .ha .a.ok { background: rgba(41,217,140,.08); border: 1.5px solid var(--ok); color: var(--tx); }
+  .qbz .answered { text-align: center; font-size: 10.5px; color: var(--tx2); }
+  .qbz .locked-in { text-align: center; font-weight: 800; font-size: 11.5px; }
+  .qbz .pfoot { display: flex; justify-content: center; gap: 5px; padding: 8px 10px 12px; border-top: 1px solid var(--bd); background: rgba(10,8,30,.4); flex-wrap: wrap; }
+  .qbz .pfoot .note2 { width: 100%; text-align: center; font-size: 10.5px; color: var(--tx3); }
+  .qbz .lg { font-size: 10.5px; font-weight: 700; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--bd); background: var(--card); }
+  .qbz .ib { font-size: 10px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--bd); background: var(--card); }
+
+  /* host bottom bar */.qbz .hfoot { display: flex; gap: 6px; padding: 8px 10px 14px; border-top: 1px solid var(--bd); background: rgba(10,8,30,.5); }
+  .qbz .hfoot > * { flex: 1; }
+  .qbz .qb-btn { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: 800; font-size: 12px; padding: 10px 6px; border-radius: 12px; background: var(--card); border: 1px solid var(--bd); color: var(--tx); line-height: 1.15; min-height: 42px; transition: transform .1s; }
+  .qbz .qb-btn.gold { background: var(--g); border-color: var(--g); color: #1a1400; }
+  .qbz .qb-btn.pink { background: var(--pink); border-color: var(--pink); color: #fff; }
+  .qbz .qb-btn.ghost { background: transparent; }
+  .qbz .qb-btn.purple { background: var(--pur); border-color: var(--pur); color: #fff; }
+  .qbz .qb-btn.brown { background: #3a2d22; border-color: rgba(242,185,10,.4); color: #ffe7b0; }
+  .qbz .qb-btn.sm { min-height: 32px; padding: 6px; font-size: 11px; }
+  .qbz .qb-btn.off { opacity: .4; }
+  .qbz .qb-btn.pressed { transform: scale(.95); }
+  .qbz .tap { position: absolute; left: 50%; top: 50%; width: 24px; height: 24px; margin: -12px; border-radius: 50%; background: rgba(255,255,255,.8); animation: tap .6s ease-out forwards; pointer-events: none; }
+  @keyframes tap { from { transform: scale(.4); opacity: .9; } to { transform: scale(5); opacity: 0; } }
+
+  /* cards, rows */.qbz .card { background: var(--card); border: 1px solid var(--bd); border-radius: 12px; padding: 10px; }
+  .qbz .lbl { font-size: 9.5px; text-transform: uppercase; letter-spacing: .8px; font-weight: 800; color: var(--tx3); }
+  .qbz .sm { font-size: 10.5px; }
+  .qbz .mut { color: var(--tx3); }
+  .qbz .fact { font-size: 10.5px; color: var(--tx2); background: rgba(40,36,90,.6); border: 1px solid var(--bd); border-radius: 10px; padding: 7px 9px; }
+  .qbz .res { display: flex; flex-direction: column; gap: 4px; }
+  .qbz .rr { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-radius: 9px; background: var(--card); border: 1px solid var(--bd); }
+  .qbz .rr .n { flex: 1; min-width: 0; font-weight: 800; font-size: 11px; line-height: 1.2; }
+  .qbz .rr .n small { display: block; font-weight: 500; font-size: 9px; color: var(--tx3); }
+  .qbz .rr.wrong .n { color: var(--tx3); }
+  .qbz .ch { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .qbz .ch.base { background: var(--ok-bg); color: var(--ok); }
+  .qbz .ch.spd { background: var(--amb-bg); color: var(--amb); }
+  .qbz .ch.bet { background: var(--g-bg); color: var(--g); }
+  .qbz .ch.neg { background: var(--bad-bg); color: var(--bad); }
+  .qbz .ch.zero { background: rgba(255,255,255,.07); color: var(--tx3); }
+  .qbz .jcard { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 17px; border-radius: 3px; background: var(--pur); color: #fff; font-size: 9px; font-weight: 900; vertical-align: -3px; }
+  .qbz .jcard.big { width: 30px; height: 40px; font-size: 18px; border-radius: 6px; flex-shrink: 0; }
+  .qbz .av { width: 22px; height: 22px; border-radius: 50%; background: #f4f2ff; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+
+  .qbz .lbr { display: flex; flex-direction: column; gap: 5px; }
+  .qbz .lr { display: flex; align-items: center; gap: 7px; padding: 8px 9px; border-radius: 11px; background: var(--card); border: 1px solid var(--bd); }
+  .qbz .lr.me { border-color: var(--g-bd); }
+  .qbz .lr .rk { width: 12px; font-weight: 800; font-size: 13px; color: var(--tx2); text-align: center; }
+  .qbz .lr .n { flex: 1; min-width: 0; font-weight: 800; font-size: 11.5px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .qbz .lr .n small { font-weight: 600; font-size: 9px; color: var(--tx3); }
+  .qbz .lr .sc { font-weight: 900; color: var(--g); font-variant-numeric: tabular-nums; font-size: 12px; text-align: right; line-height: 1.1; }
+  .qbz .lr .sc small { display: block; font-size: 9px; font-weight: 700; }
+  .qbz .up { color: var(--ok); } .qbz .down { color: var(--bad); }
+  .qbz .leading { text-align: center; font-size: 10.5px; font-weight: 700; color: var(--tx2); }
+  .qbz .leading b { color: var(--g); }
+  .qbz .hl { display: flex; align-items: center; gap: 8px; padding: 6px 9px; border-radius: 10px; background: var(--card); border: 1px solid var(--bd); }
+  .qbz .hl .i { font-size: 15px; }
+  .qbz .hl small { display: block; font-size: 9px; color: var(--tx2); }
+  .qbz .hl b { font-size: 11.5px; }
+
+  .qbz .pc { border-radius: 14px; padding: 12px 10px; text-align: center; border: 1px solid var(--ok-bd); background: linear-gradient(160deg, rgba(41,217,140,.14), rgba(28,25,68,.9)); display: flex; flex-direction: column; gap: 5px; align-items: center; }
+  .qbz .pc.bad { border-color: var(--bad-bd); background: linear-gradient(160deg, rgba(255,92,122,.16), rgba(28,25,68,.9)); }
+  .qbz .pc .v { font-size: 30px; font-weight: 900; color: var(--ok); line-height: 1; font-variant-numeric: tabular-nums; }
+  .qbz .pc.bad .v { color: var(--bad); }
+  .qbz .pc .s { font-size: 10px; color: var(--ok); }
+  .qbz .pc.bad .s { color: var(--bad); }
+  .qbz .pc .chs { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+  .qbz .pc .note { font-size: 10px; color: var(--tx); }
+  .qbz .fast { font-size: 9px; font-weight: 800; background: var(--g); color: #1a1400; padding: 1px 6px; border-radius: 99px; }
+  .qbz .bar2 { width: 100%; display: flex; height: 6px; border-radius: 6px; overflow: hidden; background: rgba(255,255,255,.08); }
+  .qbz .bar2 i { display: block; height: 100%; }
+  .qbz .bar2 .b { background: var(--ok); } .qbz .bar2 .j { background: var(--pur); } .qbz .bar2 .s { background: var(--amb); }
+  .qbz .fresh .bar2 i { animation: grow .9s .5s ease-out both; transform-origin: 0 50%; }
+  @keyframes grow { from { transform: scaleX(0); } to { transform: none; } }
+  .qbz .verdict { text-align: center; font-weight: 800; font-size: 12px; }
+
+  /* lobby */.qbz .h2 { font-size: 18px; font-weight: 800; line-height: 1.15; }
+  .qbz .gtitle { font-size: 13px; font-weight: 800; color: var(--g); }
+  .qbz .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .qbz .qb-chip { font-size: 9.5px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--card); border: 1px solid var(--bd); color: var(--tx2); }
+  .qbz .qb-chip.gold { color: var(--g); border-color: var(--g-bd); background: var(--g-bg); }
+  .qbz .qb-chip.pur { color: var(--pur-tx); border-color: rgba(139,92,246,.5); background: var(--pur-bg); }
+  .qbz .modes { font-size: 10px; color: var(--tx2); display: flex; flex-direction: column; gap: 5px; }
+  .qbz .modes .hd { display: flex; justify-content: space-between; font-weight: 800; color: var(--tx); font-size: 10.5px; }
+  .qbz .modes .hd span { color: var(--pur-tx); }
+  .qbz .modes b { color: var(--tx); }
+  .qbz .you { display: flex; align-items: center; gap: 10px; }
+  .qbz .you .av { width: 40px; height: 40px; font-size: 22px; }
+  .qbz .others { display: flex; gap: 8px; flex-wrap: wrap; font-weight: 700; font-size: 11px; align-items: center; }
+  .qbz .wait { display: flex; align-items: center; gap: 8px; background: #f5f4ff; color: #4a4a7a; border-radius: 10px; padding: 8px 10px; font-size: 10.5px; }
+  .qbz .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #c9c6ee; border-top-color: #534AB7; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .qbz .field { display: flex; flex-direction: column; gap: 4px; }
+  .qbz .flbl { font-size: 9.5px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--tx2); }
+  .qbz .inp { background: var(--card); border: 1px solid var(--bd); border-radius: 10px; padding: 8px 10px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; min-height: 34px; }
+  .qbz .inp.ph { color: var(--tx3); font-weight: 400; }
+  .qbz .inp.focus { border-color: var(--g-bd); }
+  .qbz .inp.code { letter-spacing: 4px; font-weight: 800; }
+  .qbz .caret { width: 1.5px; height: 14px; background: var(--g); margin-left: 1px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .qbz .icons { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+  .qbz .icons span { aspect-ratio: 1; border-radius: 9px; background: var(--card); display: flex; align-items: center; justify-content: center; font-size: 15px; border: 2px solid transparent; }
+  .qbz .icons span.on { border-color: #6f6ad8; background: #2b2770; }
+  .qbz .ready { font-size: 10.5px; color: var(--ok); background: var(--ok-bg); border: 1px solid var(--ok-bd); border-radius: 8px; padding: 5px 8px; }
+  .qbz .jtabs { display: flex; gap: 6px; }
+  .qbz .jtabs span { flex: 1; text-align: center; font-size: 11px; font-weight: 800; padding: 6px; border-radius: 9px; border: 1px solid var(--bd); background: #120f30; }
+  .qbz .jtabs span.on { border: 1.5px solid var(--g); color: var(--g); background: transparent; }
+  .qbz .qrrow { display: flex; gap: 9px; align-items: flex-start; }
+  .qbz .qrsvg { width: 84px; height: 84px; border-radius: 6px; flex-shrink: 0; display: block; }
+  .qbz .url { color: var(--g); font-weight: 800; font-size: 11.5px; word-break: break-all; }
+
+  /* splashes */.qbz .splash { position: absolute; inset: -24px 0 0 0; z-index: 10; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 40px 18px 26px; background: radial-gradient(70% 45% at 50% 42%, rgba(80,60,170,.35), transparent 70%), #12102e; }
+  .qbz .sp-title { font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; color: var(--tx2); }
+  .qbz .sp-round { margin-top: auto; font-size: 13px; letter-spacing: 4px; text-transform: uppercase; font-weight: 800; color: var(--g); }
+  .qbz .sp-num { font-size: 104px; font-weight: 900; line-height: 1; color: #f7ecd9; text-shadow: 0 0 40px rgba(242,185,10,.35); animation: numIn .7s cubic-bezier(.2,1.4,.4,1) both; }
+  @keyframes numIn { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+  .qbz .sp-of { font-size: 15px; font-weight: 700; color: var(--tx2); }
+  .qbz .sp-chips { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-top: 14px; }
+  .qbz .sp-chips span { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 99px; background: rgba(255,255,255,.08); }
+  .qbz .sp-you { margin-top: 14px; width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; padding: 9px 10px; border-radius: 12px; border: 1px solid var(--bd); background: rgba(255,255,255,.05); }
+  .qbz .sp-you .k { font-size: 8.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--tx3); font-weight: 800; }
+  .qbz .sp-you .v { font-size: 14px; font-weight: 800; }
+  .qbz .sp-you .r { margin-left: auto; text-align: right; font-size: 10px; color: var(--tx2); }
+  .qbz .sp-bar { width: 60%; height: 4px; border-radius: 4px; background: rgba(255,255,255,.1); margin-top: 16px; overflow: hidden; margin-bottom: auto; }
+  .qbz .sp-bar i { display: block; height: 100%; background: var(--amb); }
+  .qbz .sp-foot { font-size: 10.5px; font-weight: 700; padding: 6px 12px; border-radius: 10px; background: rgba(255,255,255,.07); display: flex; gap: 6px; align-items: center; }
+  .qbz .cs-icon { margin-top: auto; width: 110px; height: 110px; border-radius: 50%; background: #f4f2ff; display: flex; align-items: center; justify-content: center; font-size: 58px; box-shadow: 0 0 0 18px rgba(242,185,10,.1), 0 0 60px rgba(242,185,10,.25); animation: numIn .7s cubic-bezier(.2,1.4,.4,1) both; }
+  .qbz .cs-k { margin-top: auto; font-size: 11px; letter-spacing: 2.5px; font-weight: 800; color: var(--g); text-transform: uppercase; }
+  .qbz .cs-name { font-size: 30px; font-weight: 900; letter-spacing: .5px; text-transform: uppercase; }
+  .qbz .cs-line { width: 34px; height: 3px; background: var(--g); border-radius: 2px; margin: 6px 0; }
+  .qbz .cs-q { font-size: 11px; color: var(--tx2); }
+
+  /* wager */.qbz .wcat { text-align: center; }
+  .qbz .wcat .big { font-size: 20px; font-weight: 800; }
+  .qbz .bet { text-align: center; }
+  .qbz .bet .v { font-size: 34px; font-weight: 900; color: var(--g); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .qbz .slider { position: relative; height: 6px; border-radius: 6px; background: rgba(255,255,255,.15); margin: 6px 8px; }
+  .qbz .slider .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--g); border-radius: 6px; }
+  .qbz .slider .thumb { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--g); border: 2px solid #fff3c4; }
+  .qbz .presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .qbz .ifs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; text-align: center; font-size: 10px; }
+  .qbz .ifs div { border-radius: 9px; padding: 6px; }
+  .qbz .ifs b { display: block; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .qbz .ifs .r { background: var(--ok-bg); color: var(--ok); }
+  .qbz .ifs .w { background: var(--bad-bg); color: var(--bad); }
+  .qbz .wlock { text-align: center; border-color: var(--g-bd); }
+  .qbz .wlock .v { font-size: 30px; font-weight: 900; color: var(--g); font-variant-numeric: tabular-nums; }
+  .qbz .tline { height: 3px; border-radius: 3px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .qbz .tline i { display: block; height: 100%; background: var(--g); }
+
+  /* awards */.qbz .aw-ov { position: absolute; inset: -24px 0 0 0; z-index: 10; background: rgba(8,6,22,.86); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 20px 16px; }
+  .qbz .pips { display: flex; gap: 5px; }
+  .qbz .pips i { width: 26px; height: 5px; border-radius: 3px; background: #2a2860; }
+  .qbz .pips i.on { background: #6f6ad8; }
+  .qbz .aw-card { width: 100%; text-align: center; padding: 22px 12px; border-radius: 16px; background: #1a1933; border: 2px solid #2a2860; }
+  .qbz .aw-card.mine { border-color: var(--g); box-shadow: 0 0 26px rgba(242,185,10,.25); }
+  .qbz .aw-i { font-size: 46px; line-height: 1.1; }
+  .qbz .aw-t { font-size: 20px; font-weight: 800; margin-top: 6px; }
+  .qbz .aw-s { font-size: 9.5px; color: var(--tx2); letter-spacing: 1.2px; text-transform: uppercase; }
+  .qbz .aw-w { font-size: 22px; font-weight: 900; color: #b9a8ff; margin-top: 10px; }
+  .qbz .aw-d { font-size: 11px; color: var(--tx); }
+  .qbz .youtag { font-size: 9px; background: var(--g); color: #1a1400; padding: 1px 6px; border-radius: 99px; vertical-align: middle; }
+  .qbz .skip { align-self: flex-end; font-size: 11px; color: #9090b8; border: 1px solid #3a3860; padding: 5px 14px; border-radius: 16px; }
+  .qbz .aw-intro { font-size: 44px; text-align: center; }
+  .qbz .aw-intro b { display: block; font-size: 18px; }
+
+  /* finished */.qbz .fin-hd { text-align: center; }
+  .qbz .fin-hd .e { font-size: 24px; }
+  .qbz .fin-hd b { font-size: 16px; }
+  .qbz .pod { display: flex; align-items: flex-end; justify-content: center; gap: 4px; }
+  .qbz .pod > div { width: 72px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  .qbz .pod .av { width: 30px; height: 30px; font-size: 17px; }
+  .qbz .pod .pn { font-weight: 800; font-size: 10.5px; }
+  .qbz .pod .ps { font-size: 9px; color: var(--tx2); font-variant-numeric: tabular-nums; }
+  .qbz .pod .blk { width: 100%; border-radius: 4px 4px 0 0; display: flex; justify-content: center; padding-top: 4px; font-weight: 900; font-size: 13px; color: #3a2a00; }
+  .qbz .fresh .pod .blk { animation: rise .7s ease-out both; transform-origin: 50% 100%; }
+  @keyframes rise { from { transform: scaleY(0); } to { transform: none; } }
+  .qbz .fstats { display: flex; justify-content: center; gap: 18px; text-align: center; }
+  .qbz .fstats b { font-size: 18px; font-variant-numeric: tabular-nums; }
+  .qbz .fstats b small { font-size: 11px; color: var(--tx3); }
+  .qbz .fstats div div { font-size: 9.5px; color: var(--tx3); }
+  .qbz .awl { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 10px; background: var(--card); border: 1px solid var(--bd); }
+  .qbz .awl.mine { border-color: var(--g-bd); }
+  .qbz .awl .i { font-size: 18px; }
+  .qbz .awl small { display: block; font-size: 9px; color: var(--tx2); }
+  .qbz .awl b { font-size: 11.5px; }
+  .qbz .rc { border-radius: 8px; overflow: hidden; }
+  .qbz .rc-h { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 11px; }
+  .qbz .rc-h.ok { background: #1a3d2a; } .qbz .rc-h.no { background: #2b1414; }
+  .qbz .rc-h .num { color: #6060a0; font-weight: 700; }
+  .qbz .rc-h .ic { font-weight: 900; }
+  .qbz .rc-h.ok .ic, .qbz .rc-h .pts.ok { color: #29B86D; } .qbz .rc-h.no .ic, .qbz .rc-h .pts.no { color: #E05454; }
+  .qbz .rc-h .tx { flex: 1; min-width: 0; color: #e0e0e0; }
+  .qbz .rc-h .pts { font-weight: 800; font-size: 10px; white-space: nowrap; }
+  .qbz .rc-o { background: #111028; padding: 4px 7px 5px; display: flex; flex-direction: column; gap: 2px; }
+  .qbz .rc-o div { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: #16152e; color: #7070a0; display: flex; gap: 6px; }
+  .qbz .rc-o .c { background: #1a3d2a; color: #29B86D; } .qbz .rc-o .w { background: #2b1414; color: #E05454; }
+  .qbz .rc-f { background: #111028; padding: 5px 9px 7px; font-size: 10px; color: #b0b0cc; }
+  .qbz .rc-round { font-size: 9.5px; font-weight: 800; letter-spacing: .6px; color: #8080b8; text-transform: uppercase; display: flex; align-items: center; gap: 6px; padding-top: 4px; }
+  .qbz .rc-tag { text-transform: none; letter-spacing: 0; }
+  .qbz .ffoot { display: flex; flex-direction: column; gap: 6px; padding: 8px 12px 14px; border-top: 1px solid var(--bd); background: rgba(10,8,30,.6); }
+
+  /* ─── v3: shared demo bits ─── */.qbz .nextc { display: flex; flex-direction: column; line-height: 1.1; }
+  .qbz .nextc small { font-size: 9.5px; font-weight: 700; opacity: .75; }
+  .qbz .hfoot .mini { flex: 0 0 38px; }
+  .qbz .flagb { font-size: 10px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--bd); background: var(--card); }
+  .qbz .hb-home { font-size: 10px; font-weight: 800; color: var(--tx2); border: 1px solid var(--bd); padding: 2px 8px; border-radius: 8px; }
+
+  /* ============ PLAYTHROUGHS (hero BingoNingo demo + QuizBlitz section) ============ */
+  .bnz, .qbz {
+    --demo-accent: var(--accent);
+    --demo-focus: var(--accent-2);
+    --demo-panel: var(--surface-hi);
+    --demo-panel2: var(--surface);
+    --demo-line: var(--line);
+    --demo-text: var(--text);
+    --demo-muted: var(--text-mute);
+    --demo-screen-bg: #121212;
+  }
+  .bnz .ctl-btn:not(.sec), .qbz .ctl-btn:not(.sec), .bnz .again, .qbz .again, .bnz .persp button[aria-pressed="true"], .qbz .persp button[aria-pressed="true"] { color: var(--accent-ink); }
+  .bnz .chap.on, .qbz .chap.on { color: var(--text); }
+  .bnz .chap-now b, .qbz .chap-now b { font-family: var(--font-display); }
+  .bnz .chap-now span b, .qbz .chap-now span b { display: inline; font-size: inherit; text-transform: none; letter-spacing: 0; color: var(--accent-2); }
+  .bnz .ph-lbl, .qbz .ph-lbl { font-family: var(--font-display); font-weight: 600; }
+
+  /* hero: give the demo more room than the old screenshot card */
+  .hero-grid.has-demo { grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 44px; }
+  .hero-grid.has-demo h1 .pop { white-space: normal; }
+  .hero-visual.has-demo .spotlight { gap: 14px; }
+  .bnz .stage { margin-top: 2px; }
+  .bnz .ctl { margin-top: 0; padding: 8px 12px; }
+  .bnz .chap-now { min-height: 0; padding: 12px 14px; }
+  .bnz .chap-now span { font-size: 14.5px; }
+  .bnz .chaps { margin-top: 0; }
+  @media (max-width: 940px) {
+    .hero-grid.has-demo { grid-template-columns: minmax(0, 1fr); }
+    .hero-visual.has-demo { height: auto; max-width: none; }
+  }
+
+  /* QuizBlitz section */
+  .qb-demo { padding: 40px 0 110px; }
+  .qb-demo .demo-grid { align-items: center; }
+  .qb-demo h2 { font-size: clamp(28px, 4vw, 40px); margin: 14px 0 14px; }
+  .qb-demo .lead { color: var(--text-dim); font-size: 17px; margin-bottom: 22px; }
+  .qb-demo .more { display: inline-block; margin-top: 18px; color: var(--accent-2); font-weight: 600; text-decoration: none; }
+  .qb-demo .more:hover { text-decoration: underline; }
+  .qbz .stage-wrap { background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line-hi); border-radius: 24px; padding: 20px; }
+  /* the stage clips overflow: keep the phone shadow tight so it doesn't show as a dark box */
+  .bnz .phone, .qbz .phone { box-shadow: 0 10px 18px -10px rgba(0,0,0,.7); }
+</style>
 </head>
 <body>
 
@@ -71,7 +641,7 @@
 <!-- ============ HERO ============ -->
 <header class="hero">
   <div class="wrap">
-    <div class="hero-grid">
+    <div class="hero-grid has-demo">
       <div class="hero-copy">
         <span class="eyebrow">Indie app studio</span>
         <h1>Tiny apps with <span class="pop">big personality.</span></h1>
@@ -81,15 +651,27 @@
           <a class="btn btn-ghost" href="https://bingoningo.thecrazycat.com/game/" target="_blank" rel="noopener">Play BingoNingo Cards in browser</a>
         </div>
         <div class="hero-stats">
-          <div class="stat"><b>2</b><span>live on Google Play</span></div>
-          <div class="stat"><b>2</b><span>in production</span></div>
+          <div class="stat"><b>5</b><span>live on Google Play</span></div>
+          <div class="stat"><b>1</b><span>web app</span></div>
           <div class="stat"><b>UK</b><span>indie made</span></div>
         </div>
       </div>
-      <div class="hero-visual">
-        <div class="spotlight">
-          <span class="spot-tag"><span class="dot"></span>Flagship · Live now</span>
-          <img class="spot-shot" src="https://play-lh.googleusercontent.com/yHYLQTV10hZn9BGJXnqPVSohbrmuu4jkGVYQIXIorpiLMPY8yrVxtCKix_a44oBjdmMQTovqSv9IPV40PlFwYGU=w526-h296" alt="BingoNingo Bingo Caller screenshot" style="object-fit: contain" />
+      <div class="hero-visual has-demo">
+        <div class="spotlight bnz" data-demo="bn">
+          <span class="spot-tag"><span class="dot"></span>Flagship · Live now · Watch a game</span>
+          <div class="persp" data-r="persp" role="group" aria-label="Whose phone"></div>
+          <div class="stage" data-r="stage">
+            <div class="stage-inner" data-r="inner"></div>
+            <div class="end-ov" data-r="end" hidden><button type="button" class="again" data-r="again">↻ Play again</button></div>
+          </div>
+          <div class="chap-now" aria-live="polite"><b data-r="chapname"></b><span data-r="chapcap"></span></div>
+          <div class="ctl">
+            <button type="button" class="ctl-btn" data-r="pp" aria-label="Play">▶</button>
+            <div class="scrub"><input type="range" data-r="scrub" min="0" max="100" step="0.05" value="0" aria-label="Demo position"><div class="ticks" data-r="ticks"></div></div>
+            <span class="time" data-r="time">0:00</span>
+            <button type="button" class="ctl-btn sec" data-r="restart" aria-label="Restart">↺</button>
+          </div>
+          <div class="chaps" data-r="chaps"></div>
           <div class="spot-row">
             <span class="ic"><img src="https://play-lh.googleusercontent.com/UR2xQhNVcsN9dnyKk6hRBVv38SL1JI2V43YABy2aH7JxHgKr0X6NkoK6M9IYG1907eIMza325c921pc20AtA3Sc=s128" alt="" /></span>
             <div>
@@ -125,7 +707,6 @@
       <div class="filters" role="tablist" aria-label="Filter apps">
         <button class="chip active" data-filter="all">All</button>
         <button class="chip" data-filter="live">Live</button>
-        <button class="chip" data-filter="prod">In production</button>
       </div>
     </div>
 
@@ -200,18 +781,18 @@
       </article>
 
       <!-- QuizBlitz -->
-      <article class="app-card reveal" data-status="prod">
+      <article class="app-card reveal" data-status="live">
         <div class="app-top">
           <div class="app-icon"><img src="assets/quizblitz.png" alt="QuizBlitz icon" /></div>
-          <span class="badge prod"><span class="dot"></span>In production</span>
+          <span class="badge live"><span class="dot"></span>Live</span>
         </div>
         <h3>QuizBlitz</h3>
-        <p class="desc">A fast-paced Android quiz game. Race the clock, build answer streaks and climb the board — bite-sized rounds made for that "just one more" feeling.</p>
-        <div class="tags"><span class="tag">Android</span><span class="tag">Quiz game</span><span class="tag">Coming soon</span></div>
+        <p class="desc">The quiz game for friends &amp; family. Host on one phone while everyone answers on theirs, put it on the TV with Big Screen, or play solo with the Daily challenge, Survival and Time attack.</p>
+        <div class="tags"><span class="tag">Android</span><span class="tag">Party quiz</span><span class="tag">Big Screen</span></div>
         <div class="app-links">
-          <a class="app-link muted">
-            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-            Play Store — soon
+          <a class="app-link solid" href="https://play.google.com/store/apps/details?id=com.jcat.quizblitz" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.4 13.9 12 3.6 21.6c-.3-.2-.5-.6-.5-1V3.4c0-.4.2-.8.5-1z" opacity=".85"/><path d="M16.8 9.1 18.9 10c1.2.6 1.2 2.4 0 3l-2.1.9L14 12l2.8-2.9z"/><path d="M3.6 2.4 16.8 9.1 14 12 3.6 2.4z" opacity=".6"/><path d="M3.6 21.6 14 12l2.8 2.9-13.2 6.7z" opacity=".7"/></svg>
+            Google Play
           </a>
           <a class="app-link" href="https://thecrazycat.com/QuizBlitz/" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3a14 14 0 010 18 14 14 0 010-18z" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -221,20 +802,20 @@
       </article>
 
       <!-- RingReminder -->
-      <article class="app-card reveal" data-status="prod">
+      <article class="app-card reveal" data-status="live">
         <div class="app-top">
           <div class="app-icon ph" style="color:var(--accent)">
             <svg viewBox="0 0 24 24" fill="none"><path d="M18 8.5a6 6 0 10-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M10.2 20a2 2 0 003.6 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M4 4l16 16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
           </div>
-          <span class="badge prod"><span class="dot"></span>In production</span>
+          <span class="badge live"><span class="dot"></span>Live</span>
         </div>
         <h3>RingReminder</h3>
         <p class="desc">Never miss an important call again. RingReminder gives you a gentle heads-up when your phone is on Do Not Disturb, silent or low volume — so the calls that matter don't slip by.</p>
-        <div class="tags"><span class="tag">Android</span><span class="tag">Utility</span><span class="tag">Coming soon</span></div>
+        <div class="tags"><span class="tag">Android</span><span class="tag">Utility</span></div>
         <div class="app-links">
-          <a class="app-link muted">
-            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-            Play Store — soon
+          <a class="app-link solid" href="https://play.google.com/store/apps/details?id=com.jcat.ringreminder" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.4 13.9 12 3.6 21.6c-.3-.2-.5-.6-.5-1V3.4c0-.4.2-.8.5-1z" opacity=".85"/><path d="M16.8 9.1 18.9 10c1.2.6 1.2 2.4 0 3l-2.1.9L14 12l2.8-2.9z"/><path d="M3.6 2.4 16.8 9.1 14 12 3.6 2.4z" opacity=".6"/><path d="M3.6 21.6 14 12l2.8 2.9-13.2 6.7z" opacity=".7"/></svg>
+            Google Play
           </a>
           <a class="app-link" href="https://thecrazycat.com/RingReminder/" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3a14 14 0 010 18 14 14 0 010-18z" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -244,18 +825,18 @@
       </article>
 
       <!-- My Messages -->
-      <article class="app-card reveal" data-status="prod">
+      <article class="app-card reveal" data-status="live">
         <div class="app-top">
           <div class="app-icon"><img src="assets/mymessages.png" alt="My Messages icon" /></div>
-          <span class="badge prod"><span class="dot"></span>In production</span>
+          <span class="badge live"><span class="dot"></span>Live</span>
         </div>
         <h3>My Messages</h3>
         <p class="desc">Your phone receives dozens of notifications a day. Most don't matter. My Messages sits quietly in the background, reads every notification, and keeps only the ones that are genuinely important — NHS appointments, family messages, bank alerts — in one clean inbox.</p>
-        <div class="tags"><span class="tag">Android</span><span class="tag">Notifications</span><span class="tag">Coming soon</span></div>
+        <div class="tags"><span class="tag">Android</span><span class="tag">Notifications</span></div>
         <div class="app-links">
-          <a class="app-link muted">
-            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-            Play Store — soon
+          <a class="app-link solid" href="https://play.google.com/store/apps/details?id=com.jcat.mymessages" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.4 13.9 12 3.6 21.6c-.3-.2-.5-.6-.5-1V3.4c0-.4.2-.8.5-1z" opacity=".85"/><path d="M16.8 9.1 18.9 10c1.2.6 1.2 2.4 0 3l-2.1.9L14 12l2.8-2.9z"/><path d="M3.6 2.4 16.8 9.1 14 12 3.6 2.4z" opacity=".6"/><path d="M3.6 21.6 14 12l2.8 2.9-13.2 6.7z" opacity=".7"/></svg>
+            Google Play
           </a>
           <a class="app-link" href="https://thecrazycat.com/Mymessages/" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3a14 14 0 010 18 14 14 0 010-18z" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -273,6 +854,35 @@
         <span>New apps land here.<br/>See us on Google Play.</span>
       </a>
 
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUIZBLITZ PLAYTHROUGH ============ -->
+<section class="qb-demo" id="quizblitz-demo">
+  <div class="wrap">
+    <div class="demo-grid qbz" data-demo="qb">
+      <div class="demo-side">
+        <span class="eyebrow">Watch it play · QuizBlitz</span>
+        <h2>A quiz night, hosted from one phone.</h2>
+        <p class="lead">The host picks a quiz, friends join with a room code and everyone answers on their own phone. Here's a round, then the awards.</p>
+        <div class="chap-now" aria-live="polite"><b data-r="chapname"></b><span data-r="chapcap"></span></div>
+        <div class="chaps" data-r="chaps"></div>
+        <a class="more" href="https://thecrazycat.com/QuizBlitz/">More ways to play on the QuizBlitz page →</a>
+      </div>
+      <div class="stage-wrap">
+        <div class="persp" data-r="persp" role="group" aria-label="Whose phone"></div>
+        <div class="stage" data-r="stage">
+          <div class="stage-inner" data-r="inner"></div>
+          <div class="end-ov" data-r="end" hidden><button type="button" class="again" data-r="again">↻ Play again</button></div>
+        </div>
+        <div class="ctl">
+          <button type="button" class="ctl-btn" data-r="pp" aria-label="Play">▶</button>
+          <div class="scrub"><input type="range" data-r="scrub" min="0" max="100" step="0.05" value="0" aria-label="Demo position"><div class="ticks" data-r="ticks"></div></div>
+          <span class="time" data-r="time">0:00</span>
+          <button type="button" class="ctl-btn sec" data-r="restart" aria-label="Restart">↺</button>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -296,27 +906,113 @@
              ============================================================ -->
         <div class="timeline">
           <div class="tl-item">
-            <div class="tl-date">Jun 8, 2026</div>
-            <h4>BingoNingo Caller · resize fixes</h4>
-            <p>Improved the caller layout so it scales cleanly across every screen size.</p>
+            <div class="tl-date">Oct 2026</div>
+            <h4>QuizBlitz launches on Google Play</h4>
+            <p>Our fifth app is live — the quiz game for friends &amp; family. One phone hosts, everyone else joins from their own phone or browser, and the questions can go up on the TV.</p>
           </div>
           <div class="tl-item">
-            <div class="tl-date">Jun 6, 2026</div>
-            <h4>BingoNingo Cards · display fix</h4>
-            <p>Fixed a sizing issue on larger screens for crisper, better-fitting cards.</p>
+            <div class="tl-date">Oct 19, 2026</div>
+            <h4>QuizBlitz · fresh room codes &amp; kick</h4>
+            <p>Hosts can get a new room code from the lobby and remove a player, even mid-game, and they stay out until unblocked. Final Wager bets are now 10–100% of your score, with a proper tie-break.</p>
           </div>
-          <div class="tl-item soon">
-            <div class="tl-date">Up next</div>
-            <h4>QuizBlitz enters beta</h4>
-            <p>First playable rounds are coming together — early testing soon.</p>
+          <div class="tl-item">
+            <div class="tl-date">Oct 14, 2026</div>
+            <h4>QuizBlitz · seasonal themes &amp; share cards</h4>
+            <p>Five new seasonal themes, from Halloween to Pancake Day, plus your result as a picture to send to the group chat. Your stats and settings now come back on a new phone too.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">Oct 13, 2026</div>
+            <h4>QuizBlitz · Time attack</h4>
+            <p>A new solo mode with one 60-second clock: a right answer adds a second, a wrong one takes three away.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">Oct 12, 2026</div>
+            <h4>QuizBlitz · Daily challenge &amp; Survival</h4>
+            <p>The same questions for everyone each day, and a three-lives mode that gets harder the longer you last.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">Oct 8, 2026</div>
+            <h4>QuizBlitz · Big Screen</h4>
+            <p>Put the quiz on the TV: questions and scores on the big screen while everyone answers on their phones.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">Sep 9, 2026</div>
+            <h4>My Messages launches on Google Play</h4>
+            <p>Our fourth app is officially live — a notification filter and large-text inbox built for elderly users and the family who look out for them, with instant keyword alerts that can reach a caregiver directly.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">Aug 21, 2026</div>
+            <h4>My Messages · smarter widget &amp; badge</h4>
+            <p>Preview your daily digest before it sends, tap the home screen widget to cycle through unread messages, and long-press the floating badge for a quick peek at the latest one.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">Aug 20, 2026</div>
+            <h4>My Messages · snooze everything, instantly</h4>
+            <p>Mute every source at once, or go fully silent with one tap — Pro's new "Snooze now" covers even apps you haven't set up.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">Aug 19, 2026</div>
+            <h4>My Messages · swipe to manage your inbox</h4>
+            <p>Added swipe-to-archive gestures, per-source snooze, and suggested sources based on the notifications you already get.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">Aug 17, 2026</div>
+            <h4>RingReminder launches on Google Play</h4>
+            <p>Our third app is live — a free ringer-monitoring utility that alerts you when your phone is silent, on Do Not Disturb, or too quiet to hear a call, with an optional Pro upgrade.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">Aug 17, 2026</div>
+            <h4>My Messages enters Closed Testing</h4>
+            <p>Our fourth app is now in testing on Google Play, ahead of a wider release.</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">Aug 4, 2026</div>
+            <h4>RingReminder · in-app "What's new"</h4>
+            <p>Added a changelog screen so updates are easy to track release to release, right inside the app.</p>
           </div>
         </div>
       </div>
 
       <div class="devlog-card reveal">
-        <span class="soon-pill">Devlog · coming soon</span>
+        <span class="soon-pill">Devlog</span>
         <div class="big">Behind the apps — notes from the workshop.</div>
-        <p>We're starting a devlog to share what we're building, what broke, and what we learned along the way. Bingo logic, win-checking, the odd cat photo — it'll all be here.</p>
+        <div class="dev-posts">
+          <div class="dev-post">
+            <div class="dev-post-meta"><span class="app-pill">QuizBlitz</span> · Oct 2026</div>
+            <h5>Six hours, then Android pulls the plug</h5>
+            <p>Android 15 stops a foreground service after six hours, and a phone hosting a quiz night is exactly that. QuizBlitz now watches the clock: it stops cleanly between games, and if the cut-off lands mid-game it saves a snapshot so the game picks up where it left off.</p>
+          </div>
+          <div class="dev-post">
+            <div class="dev-post-meta"><span class="app-pill">QuizBlitz</span> · Oct 2026</div>
+            <h5>The backup that forgot every date</h5>
+            <p>Question backups looked fine but quietly turned every date into a pair of numbers, so a restore wiped the cooldowns that stop the same question coming up twice. The fix was one line: read the raw value before it gets converted.</p>
+          </div>
+          <div class="dev-post">
+            <div class="dev-post-meta"><span class="app-pill">QuizBlitz</span> · Oct 2026</div>
+            <h5>Every question checked twice</h5>
+            <p>Before launch the whole question bank went through review in batches: lint checks for jumbled numbers and answers that give themselves away, an AI first pass on the facts, a stronger model for the ones it wasn't sure about, and a human sign-off on every change.</p>
+          </div>
+          <div class="dev-post">
+            <div class="dev-post-meta"><span class="app-pill">My Messages</span> · Sep 2026</div>
+            <h5>The feature that mattered most came last</h5>
+            <p>Everything else — inbox, digest, badge, widget — was in service of one thing: catching a message that actually needs someone's attention. Instant keyword alerts to a caregiver's email, and a check-in that notices when a phone's gone quiet, shipped in the final weeks before launch.</p>
+          </div>
+          <div class="dev-post">
+            <div class="dev-post-meta"><span class="app-pill">My Messages</span> · Aug 2026</div>
+            <h5>Five rounds to get a widget right</h5>
+            <p>The home screen widget used to snap to three fixed sizes, so anything in between wasted space or got cramped. Rebuilt it to read its actual size continuously and lay itself out for whatever shape it's given — took five rounds against real on-device screenshots to get the spacing honest.</p>
+          </div>
+          <div class="dev-post">
+            <div class="dev-post-meta"><span class="app-pill">My Messages</span> · Jul 2026</div>
+            <h5>The gradient that broke the launcher, not the app</h5>
+            <p>A bitmap-based gradient on the floating badge crashed — but not in our logs. It was crashing the phone's launcher trying to inflate a stale resource reference, which only showed up in the launcher's own logcat. Swapped it for layered flat colours instead.</p>
+          </div>
+          <div class="dev-post">
+            <div class="dev-post-meta"><span class="app-pill">My Messages</span> · Jul 2026</div>
+            <h5>Never punish a lapsed subscriber</h5>
+            <p>Pro features now gate at render time only — your chosen colour theme or badge style is never overwritten if a subscription lapses. Resubscribe and everything you picked just comes back, automatically.</p>
+          </div>
+        </div>
         <a class="btn btn-ghost" href="#apps" style="align-self:flex-start">Browse the apps</a>
       </div>
     </div>
@@ -334,14 +1030,14 @@
         <!-- EDIT ABOUT  -  change the studio story in the two <p> blocks below. -->
         <h2>One maker, one cat, lots of ideas.</h2>
         <p>TheCrazyCat is a small independent developer in the UK, building Android apps that are playful to use and genuinely helpful. The goal is simple: apps that do one thing brilliantly, look good doing it, and respect your time.</p>
-        <p>BingoNingo was the first family — a full bingo system for clubs, pubs, charities and front-room games. QuizBlitz and RingReminder are next out of the workshop.</p>
+        <p>BingoNingo was the first family — a full bingo system for clubs, pubs, charities and front-room games. RingReminder, My Messages and QuizBlitz followed it out of the workshop.</p>
         <div class="signature">
           <span class="mark logo-tile">C</span>
           <div><b>TheCrazyCat</b><span>Indie Android studio ·  UK</span></div>
         </div>
       </div>
       <div class="about-visual reveal">
-        <div class="about-tile"><b>5</b><span>apps live or in production</span></div>
+        <div class="about-tile"><b>5</b><span>apps live on Google Play</span></div>
         <div class="about-tile"><b>90</b><span>ball UK bingo, done right</span></div>
         <div class="about-tile"><b>0</b><span>dark patterns, ever</span></div>
         <div class="about-tile"><b>∞</b><span>ideas in the backlog</span></div>
@@ -366,9 +1062,9 @@
         <a href="https://play.google.com/store/apps/details?id=com.jcat.bingoningo.app" target="_blank" rel="noopener">BingoNingo Caller</a>
         <a href="https://play.google.com/store/apps/details?id=com.jcat.bingoningo.app.free" target="_blank" rel="noopener">BingoNingo Cards</a>
         <a href="https://bingoningo.thecrazycat.com/game/" target="_blank" rel="noopener">Play in browser</a>
-        <a href="https://thecrazycat.com/QuizBlitz/" target="_blank" rel="noopener">QuizBlitz · soon</a>
-        <a href="https://thecrazycat.com/RingReminder/" target="_blank" rel="noopener">RingReminder · soon</a>
-        <a href="https://thecrazycat.com/Mymessages/" target="_blank" rel="noopener">My Messages · soon</a>
+        <a href="https://play.google.com/store/apps/details?id=com.jcat.quizblitz" target="_blank" rel="noopener">QuizBlitz</a>
+        <a href="https://play.google.com/store/apps/details?id=com.jcat.ringreminder" target="_blank" rel="noopener">RingReminder</a>
+        <a href="https://play.google.com/store/apps/details?id=com.jcat.mymessages" target="_blank" rel="noopener">My Messages</a>
       </div>
       <div class="foot-col">
         <h5>Studio</h5>
@@ -407,6 +1103,773 @@
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <script type="text/babel" src="tweaks-panel.jsx"></script>
 <script type="text/babel" src="app.jsx"></script>
+
+<!-- ============ PLAYTHROUGHS (app-demo engine) ============ -->
+<script>
+(function () {
+  'use strict';
+/* app-demo engine: one timeline drives every device. Taken from the QuizBlitz website demos.
+   Paste inside the page's <script> (inside its IIFE). Usage:
+
+     const demo = Demo(document.querySelector('[data-demo="main"]'));
+     demo.load({
+       END: 60,                                   // seconds
+       chapters: [{ t: 0, n: 'Name', c: 'Caption', tag: 'Pro' }, ...],   // tag: optional pill after the name
+       devices: [{ who: 'mum', label: "<small>Mum</small>Mum's phone", cls: 'carer' },  // cls: extra label class
+                 { who: 'tv', tv: true, label: '...' }],   // tv: 16:9 frame
+       screen: (who, t) => '<div class="scn">...</div>',   // HTML for one device at time t
+       still: 6,          // optional: time shown before playing (poster frame)
+       maxScale: 1.1,     // optional: cap on fit-to-width scale
+       narrowAt: 0.82,    // optional: below this stage/natural ratio, show one device + toggle
+       tvLayout: false,   // optional: TV + small phone tucked at its corner
+       one: 'mum',        // optional: device shown first on narrow screens (default: last, or the TV)
+       full: ['carer'],   // optional: devices whose screen draws behind the status bar
+       clock: '9:41',     // optional: status bar time (string, or fn(who, t))
+       fn: {},            // optional: named functions for data-tw="fn" / "fnw"
+       act: (name, data, t) => newT,  // optional: visitor taps (see below)
+       tmap: t => t       // optional: timeline time -> screen time, to trim a longer demo (screen, tweens, clock get it)
+     });
+
+   Interactive ("hybrid") demos: put data-act="name" (plus any data-*) on a <button> in screen()
+   output. A click calls cfg.act(name, el.dataset, t); return a number to jump the timeline there,
+   or nothing to just re-render (e.g. after recording the tap in the demo's own state, which
+   screen() then reads). Keep that state keyed to timeline times so scrubbing back still works.
+
+   screen() returns plain HTML; it is only written to the DOM when it changes, so keep it a pure
+   function of (who, t) and round anything time-based. Smooth motion goes in data-tw attributes,
+   which run every frame without rebuilding HTML:
+     data-tw="count" data-s="12" data-d="1" data-a="0" data-b="1395" [data-pre="+"]  counter
+     data-tw="w" | "l"  ... data-a / data-b in %                                     width / left
+     data-tw="timer" data-s="12" data-d="20"                                         countdown
+     data-tw="ring" data-s data-d   (SVG circle r=13, dasharray 81.7)                 ring drain
+     data-tw="conic" data-s data-d                                                   pie drain
+     data-tw="scroll" data-k="t0:0,t1:1"   (keyframes: time:fraction scrolled)       scrolling
+     data-tw="fn" data-fn="name"  -> cfg.fn[name](t) is the text
+     data-tw="fnw" data-fn="name" -> cfg.fn[name](t) is [width%, background]
+*/
+const demos = [];
+const demoReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const demoEase = p => 1 - Math.pow(1 - p, 3);
+const demoFmt = n => Math.round(n).toLocaleString('en-GB');
+
+function demoTweens(root, t, fn) {
+  root.querySelectorAll('[data-tw]').forEach(el => {
+    const k = el.dataset.tw, s = +el.dataset.s, d = +el.dataset.d || 1;
+    if (k === 'timer') { el.textContent = Math.max(0, Math.ceil(d - Math.max(0, t - s))); return; }
+    if (k === 'fn') { el.textContent = fn[el.dataset.fn](t); return; }
+    if (k === 'fnw') { const r = fn[el.dataset.fn](t); el.style.width = r[0] + '%'; el.style.background = r[1]; return; }
+    if (k === 'conic') { const p = Math.max(0, 1 - (t - s) / d); el.style.background = `conic-gradient(var(--demo-accent) 0 ${p * 100}%, rgba(0,0,0,.3) 0)`; return; }
+    if (k === 'ring') { el.style.strokeDashoffset = 81.7 * Math.min(1, Math.max(0, (t - s) / d)); return; }
+    if (k === 'scroll') {
+      const ks = el.dataset.k.split(',').map(x => x.split(':').map(Number));
+      let f = ks[0][1];
+      for (let i = 0; i < ks.length - 1; i++) {
+        const [t0, f0] = ks[i], [t1, f1] = ks[i + 1];
+        if (t >= t0 && t < t1) { f = f0 + (f1 - f0) * demoEase((t - t0) / (t1 - t0)); break; }
+        if (t >= t1) f = f1;
+      }
+      el.scrollTop = f * Math.max(0, el.scrollHeight - el.clientHeight);
+      return;
+    }
+    const a = +el.dataset.a, b = +el.dataset.b;
+    const v = a + (b - a) * demoEase(Math.min(1, Math.max(0, (t - s) / d)));
+    if (k === 'count') el.textContent = (v < -0.5 ? '−' : (el.dataset.pre || '')) + demoFmt(Math.abs(v));
+    else if (k === 'w') el.style.width = v + '%';
+    else if (k === 'l') el.style.left = v + '%';
+  });
+}
+
+function Demo(root) {
+  const $ = r => root.querySelector(`[data-r="${r}"]`);
+  const stage = $('stage'), inner = $('inner'), persp = $('persp'), pp = $('pp'), scrub = $('scrub'), timeEl = $('time');
+  const endOv = $('end'), chapName = $('chapname'), chapCap = $('chapcap'), chaps = $('chaps'), ticks = $('ticks');
+  const d = { cfg: null, t: 0, playing: false, last: 0, auto: false, resume: false, one: null, targets: [], ci: -1 };
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  const clockOf = (who, t) => typeof d.cfg.clock === 'function' ? d.cfg.clock(who, t) : (d.cfg.clock || '9:41');
+
+  function load(cfg) {
+    d.cfg = cfg; d.t = 0;
+    d.one = cfg.one || (cfg.tvLayout ? cfg.devices[0] : cfg.devices[cfg.devices.length - 1]).who;
+    inner.classList.toggle('tvl', !!cfg.tvLayout);
+    inner.innerHTML = cfg.devices.map(dv => dv.tv
+      ? `<div class="ph-wrap" data-w="${dv.who}"><div class="ph-lbl host">${dv.label}</div><div class="tvwrap"><div class="tvbez"><div class="tvs" data-who="${dv.who}"></div></div><div class="tvstand"></div></div></div>`
+      : `<div class="ph-wrap" data-w="${dv.who}"><div class="ph-lbl${dv.host ? ' host' : ''}${dv.cls ? ' ' + dv.cls : ''}">${dv.label}</div><div class="phone"><div class="scr"><div class="sbar" data-clock="${dv.who}"><span></span><span>▂▄▆ ▮</span></div><div class="pb${(cfg.full || []).includes(dv.who) ? ' full' : ''}" data-who="${dv.who}"></div></div></div></div>`).join('');
+    d.targets = Array.from(inner.querySelectorAll('[data-who]'));
+    persp.innerHTML = cfg.devices.length > 1 ? cfg.devices.slice().reverse().map(dv => `<button type="button" data-p="${dv.who}" aria-pressed="${dv.who === d.one}">${dv.label.replace(/<small>.*?<\/small>/, '')}</button>`).join('') : '';
+    persp.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      d.one = b.dataset.p; persp.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); fit();
+    }));
+    scrub.max = cfg.END;
+    ticks.innerHTML = cfg.chapters.slice(1).map(c => `<i style="left:${100 * c.t / cfg.END}%"></i>`).join('');
+    chaps.innerHTML = cfg.chapters.map(c => `<button type="button" class="chap">${c.n}</button>`).join('');
+    chaps.querySelectorAll('.chap').forEach((b, i) => b.addEventListener('click', () => { d.t = cfg.chapters[i].t + 0.01; d.auto = true; if (!d.playing) setPlaying(true); else render(); }));
+    d.ci = -1;
+    fit();
+    if (cfg.still != null) { d.t = cfg.still; render(); d.t = 0; scrub.value = 0; } else render();
+  }
+
+  // Scale the device row to the stage width; on narrow stages show one device and the toggle.
+  function fit() {
+    inner.style.transform = 'none';
+    inner.classList.remove('one');
+    inner.querySelectorAll('.ph-wrap').forEach(w => w.classList.remove('off'));
+    const cw = stage.clientWidth;
+    let nw = inner.offsetWidth;
+    const narrow = d.cfg.devices.length > 1 && cw < nw * (d.cfg.narrowAt || 0.82);
+    persp.classList.toggle('on', narrow);
+    if (narrow) {
+      inner.classList.add('one');
+      inner.querySelectorAll('.ph-wrap').forEach(w => w.classList.toggle('off', w.dataset.w !== d.one));
+      nw = inner.offsetWidth;
+    }
+    const s = Math.min(d.cfg.maxScale || 1.1, cw / nw);
+    inner.style.transform = `translateX(${Math.max(0, (cw - nw * s) / 2)}px) scale(${s})`;
+    stage.style.height = inner.offsetHeight * s + 'px';
+  }
+
+  function render() {
+    const t = d.t, cfg = d.cfg;
+    const st = cfg && cfg.tmap ? cfg.tmap(t) : t;   // screen time (tmap trims a longer demo)
+    if (!cfg) return;
+    d.targets.forEach(el => {
+      const html = cfg.screen(el.dataset.who, st);
+      if (el._h !== html) { el.innerHTML = html; el._h = html; }
+      demoTweens(el, st, cfg.fn || {});
+    });
+    inner.querySelectorAll('[data-clock]').forEach(el => { el.firstChild.textContent = clockOf(el.dataset.clock, st); });
+    scrub.value = t;
+    const pc = 100 * t / cfg.END;
+    scrub.style.background = `linear-gradient(90deg, var(--demo-accent) ${pc}%, var(--demo-panel2) ${pc}%)`;
+    timeEl.textContent = `${mmss(t)} / ${mmss(cfg.END)}`;
+    let ci = 0; cfg.chapters.forEach((c, i) => { if (t >= c.t) ci = i; });
+    if (d.ci !== ci) {
+      const c = cfg.chapters[ci]; d.ci = ci;
+      chapName.innerHTML = c.n + (c.tag ? ` <span class="tag">${c.tag}</span>` : ''); chapCap.innerHTML = c.c;
+      chaps.querySelectorAll('.chap').forEach((b, i) => b.classList.toggle('on', i === ci));
+    }
+    endOv.hidden = !(t >= cfg.END && !d.playing);
+  }
+
+  function setPlaying(v) {
+    d.playing = v;
+    pp.textContent = v ? '❚❚' : '▶';
+    pp.setAttribute('aria-label', v ? 'Pause' : 'Play');
+    if (v) {
+      demos.forEach(o => { if (o !== api && o.playing()) o.pause(); });
+      if (d.t >= d.cfg.END) d.t = 0;
+      d.last = performance.now(); requestAnimationFrame(loop);
+    }
+    render();
+  }
+
+  function loop(now) {
+    if (!d.playing) return;
+    d.t = Math.min(d.cfg.END, d.t + (now - d.last) / 1000); d.last = now;
+    if (d.t >= d.cfg.END) { setPlaying(false); return; }
+    render(); requestAnimationFrame(loop);
+  }
+
+  pp.addEventListener('click', () => { d.auto = true; setPlaying(!d.playing); });
+  $('restart').addEventListener('click', () => { d.t = 0; d.auto = true; setPlaying(true); });
+  $('again').addEventListener('click', () => { d.t = 0; setPlaying(true); });
+  scrub.addEventListener('input', () => { d.t = +scrub.value; d.last = performance.now(); render(); });
+  inner.addEventListener('click', e => {
+    const el = e.target.closest('[data-act]');
+    if (!el || !d.cfg || !d.cfg.act) return;
+    const r = d.cfg.act(el.dataset.act, el.dataset, d.t);
+    if (typeof r === 'number') { d.t = Math.min(d.cfg.END, Math.max(0, r)); d.last = performance.now(); }
+    d.auto = true;
+    render();
+  });
+  window.addEventListener('resize', () => d.cfg && fit());
+  // Autoplay once when scrolled into view (not with reduced motion); pause off screen, resume on return.
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) {
+        if (!d.auto && !demoReduced) { d.auto = true; setPlaying(true); }
+        else if (d.resume) { d.resume = false; setPlaying(true); }
+      } else if (d.playing) { d.resume = true; setPlaying(false); }
+    }), { threshold: 0.35 }).observe(stage);
+  }
+  // seek() is for the check script: it jumps to a time and renders without playing.
+  const api = { load, play: () => setPlaying(true), pause: () => setPlaying(false), playing: () => d.playing, seek: t => { d.t = t; render(); }, root };
+  demos.push(api);
+  return api;
+}
+window.appDemos = demos;
+
+  // ---- BingoNingo hero demo: caller phone + Sam's player phone, one game night ----
+  // Screens copied from the web build (Bingocaller.html, playgame.html). Cards 352 / 564 / 1830 are
+  // real cards; calls and lingo come from app.js. Hybrid: it plays itself, but the visitor can daub
+  // a called number on Sam's card, press Next on the caller or press Confirm Win.
+  const BN = (function () {
+    const END = 73;
+    const LINGO = { 2: 'One Little Duck', 6: 'Half a Dozen', 9: "Doctor's Orders", 15: 'Young and Keen', 16: 'Sweet Sixteen', 18: 'Coming of Age', 20: 'One Score', 21: 'Key of the Door', 28: 'Overweight', 31: 'Get Up and Run', 33: 'All the Threes', 37: 'More Than Eleven', 45: 'Halfway There', 47: 'Four and Seven', 49: 'PC', 59: 'Brighton Line', 62: 'Turn on the Screw', 71: 'Bang on the Drum', 78: "Heaven's Gate", 80: 'Eight and Blank', 84: 'Seven Dozen' };
+    const CALLS = [].concat(
+      [20, 6, 47, 15, 80, 21, 45, 33, 18].map((n, i) => ({ n, T: 16 + 3 * i, d: 1.6 })),
+      [{ n: 59, T: 43, d: 1.6 }],
+      [9, 31, 62, 28, 71, 2, 49, 37, 84, 16, 78].map((n, i) => ({ n, T: +(55 + 1.1 * i).toFixed(2), d: 0.7 })));
+    const CALL = {}; CALLS.forEach(c => { CALL[c.n] = c; });
+    const CARDS = [
+      { code: 352, rows: [[6, 15, 21, 33, 0, 59, 0, 0, 0], [0, 16, 0, 37, 47, 0, 62, 71, 0], [9, 0, 28, 0, 49, 0, 0, 78, 84]] },
+      { code: 564, rows: [[3, 0, 0, 0, 40, 55, 0, 79, 88], [8, 13, 0, 30, 0, 56, 0, 0, 89], [0, 0, 23, 34, 48, 0, 65, 0, 90]] },
+      { code: 1830, rows: [[1, 0, 20, 0, 0, 0, 60, 70, 85], [7, 12, 0, 0, 36, 42, 0, 76, 0], [0, 0, 22, 38, 44, 57, 67, 0, 0]] }
+    ];
+    const MINE = new Set(CARDS.flatMap(c => c.rows.flat()).filter(Boolean));
+    // Two wins: a Line (59) and a Full House (78), each confirmed on the caller.
+    const WINS = [
+      { lock: 43.8, tap: 46.0, sheet: 46.3, pick: 47.3, confirm: 49.6, show: 50.0, ok: 53.4, end: 53.8, name: 'Line', big: 'LINE' },
+      { lock: 66.8, tap: 67.6, sheet: 67.9, pick: 68.1, confirm: 68.9, show: 69.2, ok: 99, end: 99, name: 'Full House', big: 'FULL<br>HOUSE' }
+    ];
+    // Visitor taps: number -> timeline time of the tap. Scrubbing back before a call forgets it.
+    const userDaub = {};
+    const tapI = (t, T) => (T != null && t >= T && t < T + 0.6 ? '<i class="tap"></i>' : '');
+    const pop = (t, T) => (t >= T && t < T + 0.45 ? ' pop' : '');
+    const daubT = n => {
+      const c = CALL[n]; if (!c) return Infinity;
+      const u = userDaub[n];
+      return u != null && u >= c.T ? Math.min(u, c.T + c.d) : c.T + c.d;
+    };
+    const calledAt = t => CALLS.filter(c => t >= c.T).map(c => c.n);
+    const winAt = t => WINS.find(w => t >= w.lock && t < w.end);
+    const fullHouseT = () => Math.max(...CARDS[0].rows.flat().filter(Boolean).map(daubT));
+
+    // QR: three finder squares plus a fixed pattern (decorative, like the share-code QR)
+    const QR = (() => { let h = ''; for (let i = 0; i < 441; i++) { const x = i % 21, y = Math.floor(i / 21);
+      const f = (a, b) => x >= a && x < a + 7 && y >= b && y < b + 7 && (x === a || x === a + 6 || y === b || y === b + 6 || (x > a + 1 && x < a + 5 && y > b + 1 && y < b + 5));
+      const inF = (x < 8 && y < 8) || (x > 12 && y < 8) || (x < 8 && y > 12);
+      h += (f(0, 0) || f(14, 0) || f(0, 14) || (!inF && (x * 7 + y * 13 + x * y) % 5 < 2)) ? '<i class="k"></i>' : '<i></i>'; } return h; })();
+
+    // ---------- caller ----------
+    function board(called, last) {
+      let h = '';
+      for (let r = 0; r <= 10; r++) for (let c = 0; c <= 8; c++) {
+        const n = r === 10 ? (c === 8 ? 90 : 0) : c * 10 + r;
+        h += `<span class="bc${!n ? ' e' : n === last ? ' last' : called.includes(n) ? ' on' : ''}">${n || ''}</span>`;
+      }
+      return `<div class="board">${h}</div>`;
+    }
+    function callerTop(t, game, last) {
+      return `<div class="bn-top"><span class="bi"></span><span class="bi r">i</span><span class="logo">BingoNingo</span><span class="lingo">${game && last ? LINGO[last] : ''}</span></div>
+        <div class="bn-row"><span class="cb${game ? '' : ' red'}">Start${tapI(t, 13.6)}</span><span class="cb${game ? '' : ' lit'}">Player<br>Cards${tapI(t, 6.8)}</span><span class="cb lit">End</span><span class="cb lit">⚙</span><span class="ball${last ? pop(t, CALL[last].T) : ''}">${last || '-'}</span></div>`;
+    }
+    function caller(t) {
+      const game = t >= 15, called = game ? calledAt(t) : [], last = called[called.length - 1];
+      const w = winAt(t), locked = !!w && t < w.show + 0.01, nextCall = CALLS.find(c => c.T > t);
+      const fh = t >= WINS[0].end;
+      const nextTap = game && !w && nextCall && t >= nextCall.T - 0.3 ? tapI(t, nextCall.T - 0.3) : '';
+      let h = callerTop(t, game, last) +
+        `<div class="strip">${called.slice(-8).map(n => `<span class="${n === last ? 'last' : ''}">${n}</span>`).join('')}</div>` +
+        board(called, last) +
+        `<div class="bstat"><i>No Win</i><span>Remaining: ${game ? 90 - called.length : 0}</span></div>` +
+        `<div class="nextwin">${game ? 'Next Win, ' + (fh ? 'Full House' : 'Line') : ''}</div>` +
+        `<div class="foot"><span class="cb undo">↩</span><span class="cb">Check<br>Card</span>` +
+        (locked ? `<button type="button" class="cb cw go" data-act="win" aria-label="Confirm Win">Confirm<br>Win${tapI(t, w.tap)}</button>` : `<span class="cb cw">Confirm<br>Win</span>`) +
+        (game && !locked && nextCall ? `<button type="button" class="cb next go" data-act="next" aria-label="Call the next number">Next${nextTap}</button>` : `<span class="cb next${game && !w ? ' go' : ''}">Next</span>`) +
+        `</div>`;
+      if (t >= 7.2 && t < 12.8) h += selectSheet(t);
+      if (t >= 13.9 && t < 15) h += `<div class="dim"><div class="dlg"><h4>Ready to start?</h4>
+          <div class="kv"><span>Cards selected</span><b>3</b></div><div class="kv"><span>AutoCheck</span><em>On</em></div><div class="kv"><span>Confirm Win</span><em>Enabled</em></div>
+          <div class="acts"><span>Cancel</span><span class="go">Start game${tapI(t, 14.6)}</span></div></div></div>`;
+      if (w && t >= w.sheet && t < w.show) h += verifySheet(t, w, called, last);
+      if (w && t >= w.show) h += winOverlay(t, w);
+      return `<div class="bn">${h}</div>`;
+    }
+    function selectSheet(t) {
+      const added = t >= 11.0;
+      const typed = t < 8 ? '' : '0NB-SQNU'.slice(0, Math.min(8, Math.floor((t - 8) / 0.2) + 1));
+      const ini = t < 9.8 ? '' : 'SAM'.slice(0, Math.min(3, Math.floor((t - 9.8) / 0.2) + 1));
+      return `<div class="dim"><div class="sheet${t - 7.2 < 0.4 ? ' pop' : ''}"><h4>Select Cards</h4><div class="sub red">${added ? 3 : 0} of 2000</div>
+        <div class="pill-row"><span class="pill dis">Select All</span><span class="pill">Clear All</span><span class="pill">Confirm${tapI(t, 12.4)}</span></div>
+        <div class="panel"><div class="ph">OPTIONS</div><div class="opt"><span>Confirm Win</span><span class="tg${added ? ' on' : ''}"></span></div><div class="opt"><span>AutoCheck</span><span class="tg${added ? ' on' : ''}"></span></div>
+          <div class="ac1"><span>AUTO CHECK 1ST:</span><span>☑ Line</span><span>☐ 2 Lines</span><span>☑ Full House</span></div></div>
+        <div class="panel"><div class="ph">PLAYER CODES</div>
+          <div class="codein"><span class="inp${added || !typed ? ' ph0' : ''}">${added || !typed ? 'XXX-XXXX' : typed}</span><span class="inp ini${added || !ini ? ' ph0' : ''}">${added || !ini ? 'P1' : ini}</span><span class="plus">+${tapI(t, 10.8)}</span></div>
+          ${added ? `<div class="coderow${pop(t, 11)}"><span>SAM</span><u>0NB-SQNU</u><b>352</b><b>564</b><b>1830</b></div>` : ''}</div>
+        ${added ? CARDS.map(c => `<div class="cardrow sel">CARD ${c.code}</div>`).join('') : ''}
+        ${[1, 2, 3, 4].map(n => `<div class="cardrow">CARD ${n}</div>`).join('')}
+      </div>${added && t < 12.6 ? `<div class="toast pop">✓ AutoCheck available — cards selected</div>` : ''}</div>`;
+    }
+    function verifySheet(t, w, called, last) {
+      const picked = t >= w.pick + 0.3;
+      const cells = CARDS[0].rows.flat().map(n => `<span class="${n && called.includes(n) ? 'y' + (n === last ? ' lc' : '') : ''}">${n || ''}</span>`).join('');
+      return `<div class="dim"><div class="sheet${pop(t, w.sheet)}"><h4 style="font-size:12px">Verify card</h4><div class="sub">Ask the player for their card number and tap it below to verify.</div>
+        <span class="vbtn${picked ? ' ok' : ''}">352${tapI(t, w.pick)}</span>
+        ${picked ? `<div class="panel"><div class="vhead"><span>Card 352</span><span>SAM</span><em>${w.name}</em></div><div class="vgrid">${cells}</div><div class="vstat"><span>Win status</span><b>${w.name} confirmed</b></div></div>
+        <div class="bigbtn">Confirm win${tapI(t, w.confirm)}</div>` : ''}</div></div>`;
+    }
+    function winOverlay(t, w) {
+      const conf = w.name === 'Full House' ? `<div class="confetti">${Array.from({ length: 28 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:-${((i * 0.37) % 2.6).toFixed(2)}s;background:${['#ff4d4d', '#ffcc00', '#3d9df5', '#32cd32', '#ff5da2'][i % 5]}"></i>`).join('')}</div>` : '';
+      return `<div class="win">${conf}<div class="big pop">${w.big}</div><div class="cd pop">CARD 352</div><div class="mini">SAM · CARD 352 · ${w.name}</div><span class="okb">OK${tapI(t, w.ok)}</span></div>`;
+    }
+
+    // ---------- player ----------
+    function playerTop(t, playing) {
+      return `<div class="bn-top" style="height:36px"><span class="bi"></span><span class="bi r">i</span><span class="bi r"></span><span class="bi g"></span>
+        <span class="pbtn ng${playing ? '' : ' lit'}">New<br>Game${tapI(t, 1.0)}</span><span class="pbtn${playing ? ' lit' : ''}">End<br>Game</span></div>`;
+    }
+    function cardsHtml(t) {
+      const called = new Set(calledAt(t));
+      return CARDS.map(cd => `<div class="pcard"><h5><span>SAM</span><span>CARD ${cd.code}</span></h5><div class="pgrid">${cd.rows.flat().map(n => {
+        if (!n) return '<span class="pc"></span>';
+        if (!called.has(n)) return `<span class="pc">${n}</span>`;
+        const dt = daubT(n);
+        if (t >= dt) return `<span class="pc d${pop(t, dt)}">${n}${userDaub[n] != null && userDaub[n] < CALL[n].T + CALL[n].d ? '' : tapI(t, dt)}</span>`;
+        return `<button type="button" class="pc due" data-act="daub" data-n="${n}" aria-label="Daub ${n}">${n}</button>`;
+      }).join('')}</div></div>`).join('');
+    }
+    function player(t) {
+      Object.keys(userDaub).forEach(n => { if (t < CALL[n].T || t < userDaub[n] - 0.05) delete userDaub[n]; });
+      let h;
+      if (t < 1.3) {
+        h = playerTop(t, false) + `<div class="steps"><span><b>Step 1:</b>Click New Game</span><span><b>Step 2:</b>Pick your cards</span><span><b>Step 3:</b>Share your code with the caller</span><span><b>Step 4:</b>Confirm and play</span></div>`;
+      } else if (t < 12.6) {
+        h = playerTop(t, false);
+        if (t < 5.8) {
+          const ini = t < 1.6 ? '' : 'SAM'.slice(0, Math.min(3, Math.floor((t - 1.6) / 0.25) + 1)), got = t >= 3.3;
+          h += `<div class="dim" style="padding-top:60px"><div class="sheet${pop(t, 1.3)}"><h4 style="font-size:12px">Pick up to 3 cards:</h4><div class="sub">Total Cards: 2,000</div>
+            <div class="opt" style="justify-content:center;gap:6px"><span>Your initials</span><span class="inp ini${ini ? '' : ' ph0'}" style="font-size:10px">${ini || '&nbsp;'}</span></div>
+            <div class="panel" style="padding:5px;color:#bbbbbb">Quick Pick Random Cards</div>
+            <div class="qp"><span>1</span><span>2</span><span class="${got ? 'on' : ''}">3${tapI(t, 3.0)}</span></div>
+            ${got ? `<div class="panel" style="padding:4px;gap:3px">${CARDS.map(c => `<div class="cardrow sel${pop(t, 3.3)}" style="background:#1f7a1f;border-color:#44cc44">CARD ${c.code}</div>`).join('')}</div>` : ''}
+            <div class="bigbtn" style="padding:10px;font-size:11px">Check Cards (${got ? 3 : 0}/3)${tapI(t, 5.4)}</div></div></div>`;
+        } else {
+          h += `<div class="dim" style="padding:50px 14px 8px"><div class="sheet${pop(t, 5.8)}" style="align-items:center;text-align:center">
+            <span>Give the share code to the bingo caller for them to scan or enter, to check for repeat cards and enable auto check.</span>
+            <span class="sub" style="margin:0">Your share code</span><span class="code">0NB-SQNU-SAM</span><div class="qr">${QR}</div>
+            <div class="dlg" style="margin:0;padding:0;border:0;background:none;width:100%"><div class="acts" style="margin:0"><span style="background:#444444;border-color:#444444">Change Cards</span><span style="background:#e8455a;border-color:#e8455a">Confirm Cards (3/3)${tapI(t, 12.2)}</span></div></div></div></div>`;
+        }
+      } else {
+        const fhT = fullHouseT();
+        h = playerTop(t, true) + cardsHtml(t) + (t >= fhT && t < fhT + 2.6 ? '<div class="bingo">BingoNingo!</div>' : '');
+      }
+      return `<div class="bn">${h}</div>`;
+    }
+
+    function act(name, data, t) {
+      if (name === 'daub') { const n = +data.n; if (CALL[n] && t >= CALL[n].T) userDaub[n] = t; return; }
+      if (name === 'next') { const c = CALLS.find(x => x.T > t + 0.05); if (c && !winAt(t)) return c.T; return; }
+      if (name === 'win') { const w = winAt(t); if (w && t < w.tap) return w.tap + 0.01; }
+    }
+
+    return {
+      END, still: 37.8, maxScale: 1, narrowAt: 0.8, clock: '19:30',
+      chapters: [
+        { t: 0, n: 'Pick cards', c: 'Sam opens BingoNingo Cards and quick-picks three cards.' },
+        { t: 6, n: 'Share code', c: 'Sam shows the share code. The caller types it in, AutoCheck switches on, and the game starts.' },
+        { t: 15, n: 'Calling', c: 'Each number is read out loud. <b>Tap it on Sam\'s card</b> to daub it, or watch it daub itself. <b>Next</b> on the caller calls the next number.' },
+        { t: 42.5, n: 'Line!', c: '59 completes the top line of card 352. AutoCheck spots it and <b>Confirm Win</b> lights up on the caller.' },
+        { t: 54, n: 'Full House', c: 'The calls keep coming until every number on card 352 is gone: Full House, and BingoNingo! on Sam\'s phone.' }
+      ],
+      devices: [{ who: 'caller', host: true, label: '<small>Host</small>Bingo Caller' }, { who: 'sam', label: '<small>Player</small>Sam · BingoNingo Cards' }],
+      screen: (who, t) => (who === 'caller' ? caller(t) : player(t)),
+      act
+    };
+  })();
+  Demo(document.querySelector('[data-demo="bn"]')).load(BN);
+
+  // ---- QuizBlitz example: the host + player demo from thecrazycat/QuizBlitz, trimmed ----
+  // Plays 0-25 s of the original (lobby, round 1, reveal), then jumps to the awards (70.5 s on).
+  const QB = (function () {
+    const END = 98;
+    const TITLE = 'Friday Quiz';
+    const P = { alex: { n: 'Alex', av: '🐶' }, sam: { n: 'Sam', av: '🐱' }, jo: { n: 'Jo', av: '🦊' } };
+    const ORDER = ['alex', 'sam', 'jo'];
+    const JOIN = { alex: 1.0, sam: 2.6, jo: 3.9 };
+    const LET = ['A', 'B', 'C', 'D'];
+    const fmt = n => Math.round(n).toLocaleString('en-GB');
+
+    const Q1 = { n: 1, round: 1, cat: 'geography', diff: 'MEDIUM', text: 'What is the capital city of Australia?', opts: ['Sydney', 'Melbourne', 'Canberra', 'Perth'], correct: 2, fastest: 'alex', top: 395,
+      fact: 'Canberra was chosen as a compromise between rivals Sydney and Melbourne.',
+      ans: { alex: { t: 14.5, pick: 2, ms: 2500, base: 1000, speed: 395 }, jo: { t: 16.0, pick: 2, ms: 4000, base: 1000, speed: 330 }, sam: { t: 17.5, pick: 0, ms: 5500 } } };
+    const Q2 = { n: 2, round: 2, cat: 'science', diff: 'MEDIUM', text: 'Which planet has the most known moons?', opts: ['Jupiter', 'Saturn', 'Uranus', 'Neptune'], correct: 1, fastest: 'jo', top: 365, jokers: ['jo', 'sam'],
+      fact: 'Saturn has more than 270 known moons, far more than any other planet.',
+      ans: { jo: { t: 37.6, pick: 1, ms: 3000, base: 1000, mult: 2, speed: 365 }, alex: { t: 38.4, pick: 0, ms: 3800 }, sam: { t: 39.6, pick: 1, ms: 5000, base: 1000, mult: 2, speed: 290 } } };
+    const FQ = { n: 3, round: 3, cat: 'music', diff: 'MEDIUM', wager: true, text: "Which band released 'Bohemian Rhapsody' in 1975?", opts: ['Queen', 'The Who', 'Led Zeppelin', 'ABBA'], correct: 0,
+      fact: "'Bohemian Rhapsody' spent nine weeks at number one in the UK.",
+      ans: { alex: { t: 59.4, pick: 0, ms: 2000 }, jo: { t: 60.4, pick: 1, ms: 3000 }, sam: { t: 61.9, pick: 0, ms: 4500 } } };
+
+    const LB1 = { n: 1, rows: [{ p: 'alex', s: 1395, d: 1395 }, { p: 'jo', s: 1330, d: 1330 }, { p: 'sam', s: 0, d: 0 }] };
+    const LB2 = { n: 2, rows: [{ p: 'jo', s: 3695, d: 2365 }, { p: 'sam', s: 2290, d: 2290 }, { p: 'alex', s: 1395, d: 0 }] };
+    const JOKER = { jo: { t: 27.0, play: true }, sam: { t: 28.3, play: true }, alex: { t: 30.6, play: false } };
+    const GATE_TAP = 29.3;
+    const WAGER = { alex: { score: 1395, bet: 1395, lock: 54.0 }, sam: { score: 2290, bet: 2290, lock: 55.2, allIn: 53.6 }, jo: { score: 3695, bet: 1000, lock: 56.4 } };
+    const FINAL = { sam: 4580, alex: 2790, jo: 2695 };
+    const FINAL_ORDER = ['sam', 'alex', 'jo'];
+    const CORRECT = { sam: 2, alex: 2, jo: 2 };
+    const AWARDS = [
+      { i: '⚡', t: 'Speed Demon', s: 'Fastest correct answers', p: 'alex', d: '2.3 s on average' },
+      { i: '🔥', t: 'On Fire', s: 'Longest answer streak', p: 'jo', d: '2 correct in a row' },
+      { i: '🚀', t: 'Comeback Kid', s: 'Biggest climb since Round 1', p: 'sam', d: 'From 3rd to 1st' }
+    ];
+
+    const SCENES = [
+      { id: 'lobby', a: 0, b: 7.5 },
+      { id: 'intro', a: 7.5, b: 10, round: 1, chips: ['1 question', 'Geography', '20s each'] },
+      { id: 'cat', a: 10, b: 12, q: Q1, name: 'Geography', icon: '🌍' },
+      { id: 'q', a: 12, b: 18.5, q: Q1 },
+      { id: 'rev', a: 18.5, b: 25, q: Q1 },
+      { id: 'lb', a: 25, b: 31.6, lb: LB1, joker: true },
+      { id: 'intro', a: 31.6, b: 34.6, round: 2, chips: ['1 question', 'Science', '20s each'], after: LB1 },
+      { id: 'q', a: 34.6, b: 40.6, q: Q2 },
+      { id: 'rev', a: 40.6, b: 46.6, q: Q2 },
+      { id: 'lb', a: 46.6, b: 51, lb: LB2 },
+      { id: 'wager', a: 51, b: 57.4 },
+      { id: 'q', a: 57.4, b: 62.9, q: FQ },
+      { id: 'wrev', a: 62.9, b: 70.5, q: FQ },
+      { id: 'awards', a: 70.5, b: 81 },
+      { id: 'fin', a: 81, b: END }
+    ];
+    const CHAPTERS = [
+      { t: 0, n: 'Lobby', c: 'Sam scans the QR code, types a name and picks an icon. The host sees everyone arrive.' },
+      { t: 7.5, n: 'Round intro', c: 'Each round opens with a splash on every phone at once.' },
+      { t: 12, n: 'Question', c: 'Everyone answers on their own phone. The host sees who has locked in.' },
+      { t: 18.5, n: 'Reveal', c: 'Sam picked Sydney. The reveal shows the right answer, a fun fact and how the points were scored.' },
+      { t: 25, n: 'Joker', c: 'Between rounds, Sam plays the Joker: base points count double in Round 2.' },
+      { t: 31.6, n: 'Round 2', c: 'A Joker round. Sam answers correctly and the doubled base points show in the breakdown.' },
+      { t: 46.6, n: 'Standings', c: 'Standings after Round 2. The last question is the Final Wager.' },
+      { t: 51, n: 'Final Wager', c: 'Players see the category but not the question. Sam goes all in.' },
+      { t: 57.4, n: 'Final question', c: 'Only the bet counts: a right answer wins it, a wrong one loses it.' },
+      { t: 62.9, n: 'Results', c: 'Sam doubles up and jumps from last place to first.' },
+      { t: 70.5, n: 'Awards', c: 'An awards ceremony plays on every phone.' },
+      { t: 81, n: 'Recap', c: 'The end screen: podium, your stats, awards and a recap of every question.' }
+    ];
+
+    const sceneAt = t => SCENES.find(s => t < s.b) || SCENES[SCENES.length - 1];
+    const pop = (t, T) => (t >= T && t < T + 0.5 ? 'pop' : '');
+    const tapping = (t, T) => T != null && t >= T && t < T + 0.6;
+    function btn(label, cls, t, T, off) {
+      const pressed = T != null && t >= T && t < T + 0.25;
+      return `<div class="qb-btn ${cls || ''}${off ? ' off' : ''}${pressed ? ' pressed' : ''}">${label}${tapping(t, T) ? '<i class="tap"></i>' : ''}</div>`;
+    }
+    const tw = (k, a, b, s, d, pre) => `data-tw="${k}" data-a="${a}" data-b="${b}" data-s="${s}" data-d="${d}"${pre ? ` data-pre="${pre}"` : ''}`;
+    const timerTxt = (s, d) => `<span data-tw="timer" data-s="${s}" data-d="${d}">${d}</span>`;
+    const ring = (s, d) => `<div class="ring"><svg viewBox="0 0 30 30"><circle class="bgc" cx="15" cy="15" r="13"/><circle class="fgc" cx="15" cy="15" r="13" data-tw="ring" data-s="${s}" data-d="${d}"/></svg><span>${timerTxt(s, d)}</span></div>`;
+    const nextLbl = (label, s, d) => `<span class="nextc">${label}<small>in ${timerTxt(s, d)} s</small></span>`;
+    const jc = '<span class="jcard">J</span>';
+    const av = p => `<span class="av">${P[p].av}</span>`;
+
+    function scoreAt(p, t) {
+      if (t >= 63.7) return FINAL[p];
+      if (t >= 40.6) return LB2.rows.find(r => r.p === p).s;
+      if (t >= 18.5) return LB1.rows.find(r => r.p === p).s;
+      return 0;
+    }
+    const jokerPlayed = (p, t) => JOKER[p].play && t >= JOKER[p].t;
+    const isRight = (q, p) => q.ans[p].pick === q.correct;
+    const pts = a => (a.base || 0) * (a.mult || 1) + (a.speed || 0);
+
+    const QR = (function () {
+      const N = 21; let seed = 11, s = '';
+      const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+        const inF = (x < 8 && y < 8) || (x > N - 9 && y < 8) || (x < 8 && y > N - 9);
+        let on;
+        if (inF) {
+          const fx = x < 8 ? x : x - (N - 7), fy = y < 8 ? y : y - (N - 7);
+          on = fx >= 0 && fx <= 6 && fy >= 0 && fy <= 6 && (fx === 0 || fx === 6 || fy === 0 || fy === 6 || (fx >= 2 && fx <= 4 && fy >= 2 && fy <= 4));
+        } else on = rnd() > 0.52;
+        if (on) s += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
+      }
+      return `<svg class="qrsvg" viewBox="-1.5 -1.5 24 24" aria-hidden="true"><rect x="-1.5" y="-1.5" width="24" height="24" fill="#fff"/><g fill="#111">${s}</g></svg>`;
+    })();
+
+    /* ── shared pieces ── */
+    const pfoot = (note, flag) => `<div class="pfoot">${note ? `<div class="note2">${note}</div>` : ''}<span class="lg">Leave game</span><span class="ib">🔊</span><span class="ib">🎨</span>${flag ? '<span class="ib">🚩</span>' : ''}<span class="ib">👋</span></div>`;
+    function gb(sub, t, extra, ringHtml, progress) {
+      return `<div class="gb"><div class="gb-row"><div class="gb-l"><div class="gb-t">${TITLE}</div><div class="gb-s">${sub}</div></div>${extra || ''}<span class="spill">${fmt(scoreAt('sam', t))}</span>${ringHtml || ''}</div>${progress != null ? `<div class="prog"><i style="width:${progress}%"></i></div>` : ''}</div>`;
+    }
+    const qLabel = q => `Question ${q.n} of 3`;
+    const wagerPill = () => `<span class="bpill">🪙 Bet ${fmt(WAGER.sam.bet)}</span>`;
+    function hbar(left, t, timer, big) {
+      return `<div class="hbar"><span class="t${big ? ' big' : ''}">${left}</span>${timer != null ? `<span class="cnt">3 / 30</span><span class="joinpill">+ Join</span><span class="cnt">🔊</span><span class="htimer">${timerTxt(timer, 20)}</span>` : ''}</div>`;
+    }
+
+    /* ── splashes ── */
+    function intro(s, who) {
+      const me = who === 'sam' && s.after;
+      let you = '';
+      if (me) {
+        const rows = s.after.rows, r = rows.findIndex(x => x.p === 'sam');
+        you = `<div class="sp-you"><span style="font-size:16px">🏆</span><div><div class="k">You after Round ${s.after.n}</div><div class="v">${['1st', '2nd', '3rd'][r]} · ${fmt(rows[r].s)} pts</div></div><div class="r">${fmt(rows[0].s - rows[r].s)} behind<br>${P[rows[0].p].n}</div></div>`;
+      }
+      const jk = s.round === 2 ? (who === 'sam' ? `<div class="sp-foot" style="margin-top:12px">${jc} Your Joker is on: base points ×2</div>` : `<div class="sp-foot">${jc} Jo and Sam played their Joker</div>`) : '';
+      return `<div class="splash"><div class="sp-title">${TITLE}</div><div class="sp-round">Round</div><div class="sp-num">${s.round}</div><div class="sp-of">of 3</div>
+        <div class="sp-chips">${s.chips.map(c => `<span>${c}</span>`).join('')}</div>${you}${who === 'sam' ? jk : ''}<div class="sp-bar"><i style="width:${(s.round - 1) * 33}%"></i></div>${who === 'host' ? jk : ''}</div>`;
+    }
+    function catSplash(s) {
+      return `<div class="splash"><div class="sp-title">${TITLE}</div><div class="cs-icon">${s.icon}</div><div class="cs-k">Category round</div><div class="cs-name">${s.name}</div><div class="cs-line"></div><div class="cs-q">Question ${s.q.n} of 3</div></div>`;
+    }
+
+    /* ── host screens ── */
+    function hostLobby(t) {
+      const joined = ORDER.filter(p => t >= JOIN[p]).sort((a, b) => JOIN[a] - JOIN[b]);
+      return `<div class="hbar"><span class="t big">Lobby</span><span class="gpill">${joined.length} players</span></div>
+        <div class="body">
+          <div class="card" style="display:flex;flex-direction:column;gap:8px"><div class="lbl">Join the game</div>
+            <div class="jtabs"><span class="on">📶 Same Wi-Fi</span><span>🌐 Internet</span></div>
+            <div class="qrrow">${QR}<div><div class="lbl">Scan, or go to</div><div class="url">http://192.168.1.20:8765/</div><div class="mut sm">Players must be on the same Wi-Fi as this phone</div></div></div></div>
+          <div class="card" style="display:flex;flex-direction:column;gap:6px"><div class="h2" style="font-size:14px">${TITLE}</div>
+            <div class="chips"><span class="qb-chip">🔁 3 rounds</span><span class="qb-chip">❓ 1/round</span><span class="qb-chip pur">${jc} Joker</span><span class="qb-chip gold">🪙 Final Wager</span></div></div>
+          <div class="lbl">Players (${joined.length})</div>
+          <div class="others">${joined.map(p => `<span class="${pop(t, JOIN[p])}" style="display:inline-flex;gap:5px;align-items:center">${av(p)} ${P[p].n}</span>`).join('') || '<span class="mut">Waiting for players…</span>'}</div>
+        </div>
+        <div class="hfoot">${btn('Start Game →', 'gold', t, 6.6, joined.length < 3)}</div>`;
+    }
+    function hostQ(q, s, t) {
+      const done = ORDER.filter(p => t >= q.ans[p].t);
+      return `${hbar(q.wager ? `🪙 Final Wager · ${qLabel(q)}` : qLabel(q), t, s.a)}
+        <div class="body ha"><div class="qt">${q.text}</div>
+          <div class="meta"><span class="diff">${q.diff}</span><span class="cat">${q.cat}</span></div>
+          <div class="ans">${q.opts.map((o, i) => `<div class="a"><span class="HL HL${i}">${LET[i]}</span>${o}</div>`).join('')}</div>
+          <div class="lbl">Answered (${done.length} / 3)</div><div class="prog" style="margin:0"><i style="width:${done.length * 33.4}%;background:var(--g)"></i></div>
+          <div class="chips">${ORDER.map(p => `<span class="qb-chip${done.includes(p) ? ' gold ' + pop(t, q.ans[p].t) : ''}">● ${P[p].n}${done.includes(p) ? ' ✓' : ''}</span>`).join('')}</div>
+        </div>
+        <div class="hfoot">${btn('Lock &amp; Reveal')}${btn('⏸ Pause')}${btn('End Game', 'pink')}</div>`;
+    }
+    function hostResults(q) {
+      const sorted = ORDER.slice().sort((x, y) => (isRight(q, y) ? pts(q.ans[y]) : -1) - (isRight(q, x) ? pts(q.ans[x]) : -1));
+      return `<div class="lbl">Results</div><div class="res">${sorted.map(p => {
+        const a = q.ans[p], ok = isRight(q, p);
+        const sub = `${(a.ms / 1000).toFixed(1)} s${ok ? '' : ' · picked ' + LET[a.pick]}`;
+        const chips = ok ? `<span class="ch base">${fmt(a.base * (a.mult || 1))} base${a.mult > 1 ? ' ×2' : ''}</span><span class="ch spd">+${a.speed} speed</span>` : '<span class="ch zero">0</span>';
+        return `<div class="rr${ok ? '' : ' wrong'}"><span class="n">${P[p].n}${p === q.fastest ? ' ⚡' : ''}${a.mult > 1 ? ' ' + jc : ''}<small>${sub}</small></span>${chips}</div>`;
+      }).join('')}</div>`;
+    }
+    function hostRev(q, s, t) {
+      return `${hbar(qLabel(q), t)}
+        <div class="body ha"><div class="qt" style="font-size:12.5px">${q.text}</div>
+          <div class="meta"><span class="diff">${q.diff}</span><span class="cat">${q.cat}</span></div>
+          <div class="ans">${q.opts.map((o, i) => `<div class="a${i === q.correct ? ' ok' : ''}"><span class="HL HL${i}">${LET[i]}</span>${o}</div>`).join('')}</div>
+          ${hostResults(q)}<div class="fact">💡 ${q.fact}</div><div class="grow"></div>
+        </div>
+        <div class="hfoot">${btn(nextLbl('Next →', s.a, s.b - s.a), 'gold', t, s.b - 0.6)}${btn('⏸', 'mini')}${btn('⟳ Swap Next')}${btn('End', 'pink')}</div>`;
+    }
+    function hostLb(s, t) {
+      const lb = s.lb;
+      const played = ORDER.filter(p => s.joker ? jokerPlayed(p, t) : Q2.jokers.includes(p)).length;
+      const decided = ORDER.filter(p => t >= JOKER[p].t).length;
+      const hls = lb.n === 1
+        ? [['⬆️', '+1,395 pts this round', 'Alex'], ['⚡', 'Fastest answers', 'Alex']]
+        : [['⬆️', '+2,365 pts this round', 'Jo'], ['🔥', '2 in a row!', 'Jo']];
+      const rows = lb.rows.map((r, i) => {
+        const holds = s.joker ? !jokerPlayed(r.p, t) : r.p === 'alex';
+        const next = s.joker && jokerPlayed(r.p, t);
+        return `<div class="lr"><span class="rk">${i + 1}</span>${av(r.p)}<span class="n">${P[r.p].n} ${holds ? jc : ''}${next ? '<span class="xpill">×2 next</span>' : ''}</span><span class="sc">${fmt(r.s)}</span></div>`;
+      }).join('');
+      const gate = s.joker && t >= GATE_TAP
+        ? `<div style="position:absolute;inset:0;background:rgba(8,6,22,.7);display:flex;align-items:center;padding:16px;z-index:5"><div class="card ${pop(t, GATE_TAP)}" style="width:100%;text-align:center;display:flex;flex-direction:column;gap:7px;padding:14px">
+            <b style="font-size:13px">Players choosing Jokers… <span ${''}>${timerTxt(GATE_TAP, 10)}</span>s</b>
+            <div style="font-size:24px;font-weight:900;color:#b9a8ff">${decided} of 3 decided</div>
+            <div class="sm mut">The round starts by itself when everyone has decided or the time is up.</div>
+            ${btn('Start anyway', 'gold')}${btn('Keep waiting')}</div></div>` : '';
+      return `<div class="hbar"><span class="t big">End of Round ${lb.n} of 3 · <b>Next: Round ${lb.n + 1}</b></span></div>
+        <div class="body" style="position:relative"><div><span class="xpill">${jc} ${played} Joker${played === 1 ? '' : 's'} played</span></div>
+          ${hls.map(h => `<div class="hl"><span class="i">${h[0]}</span><div><small>${h[1]}</small><b>${h[2]}</b></div></div>`).join('')}
+          <div class="lbr">${rows}</div>${gate}</div>
+        <div class="hfoot">${btn(s.joker ? 'Next Round →' : nextLbl('Next Round →', s.a, s.b - s.a), 'gold', t, s.joker ? GATE_TAP - 0.3 : s.b - 0.6)}${btn('End Game', 'pink')}</div>`;
+    }
+    function hostWager(s, t) {
+      const locked = ORDER.filter(p => t >= WAGER[p].lock);
+      return `<div class="hbar"><span class="t big">🪙 Final Wager · Q3 of 3</span><span class="htimer">${timerTxt(s.a, 20)}</span></div>
+        <div class="body"><div class="card wcat"><div class="sm mut">Category</div><div class="big">Music</div><div class="sm mut">Medium · the question stays hidden until bets close</div></div>
+          <div class="lbl">Bets locked (${locked.length} / 3)</div>
+          <div class="chips">${ORDER.map(p => `<span class="qb-chip${locked.includes(p) ? ' gold ' + pop(t, WAGER[p].lock) : ''}">● ${P[p].n}${locked.includes(p) ? ' 🔒' : ''}</span>`).join('')}</div>
+          <div class="sm mut">Bets stay secret until the reveal. Betting closes when everyone has locked in.</div></div>
+        <div class="hfoot">${btn('Close bets')}${btn('End Game', 'pink')}</div>`;
+    }
+    function wagerStandings(t, me, lite) {
+      const after = t >= 66.0;
+      const order = after ? FINAL_ORDER : ['jo', 'sam', 'alex'];
+      return `<div class="lbl">Final standings</div><div class="lbr">${order.map((p, i) => {
+        const w = WAGER[p], ok = isRight(FQ, p);
+        return `<div class="lr${p === me ? ' me' : ''} ${after ? pop(t, 66.0 + i * 0.12) : ''}"><span class="rk">${i + 1}</span><span class="n">${P[p].n}${p === me ? ' (you)' : ''}<small style="width:100%;color:${t >= 63.7 ? (ok ? 'var(--ok)' : 'var(--bad)') : 'var(--tx3)'}">${t >= 63.7 ? `bet ${fmt(w.bet)} · ${ok ? 'right' : 'wrong'}` : 'bet hidden'}</small></span><span class="sc" style="color:var(--tx)"><span ${tw('count', w.score, FINAL[p], 63.7, 2)}>${fmt(w.score)}</span></span></div>`;
+      }).join('')}</div>`;
+    }
+    function hostWrev(s, t) {
+      const res = ORDER.map(p => { const w = WAGER[p], ok = isRight(FQ, p); return `<div class="rr${ok ? '' : ' wrong'}"><span class="n">${P[p].n}${p === 'alex' ? ' ⚡' : ''}<small>${(FQ.ans[p].ms / 1000).toFixed(1)} s${ok ? '' : ' · picked ' + LET[FQ.ans[p].pick]}</small></span><span class="ch bet">Bet ${fmt(w.bet)}</span><span class="ch ${ok ? 'base' : 'neg'}">${ok ? '+' : '−'}${fmt(w.bet)}</span></div>`; }).join('');
+      return `${hbar('Question 3 of 3', t)}
+        <div class="body ha"><div class="qt" style="font-size:12.5px">${FQ.text}</div>
+          <div class="ans">${FQ.opts.map((o, i) => `<div class="a${i === FQ.correct ? ' ok' : ''}"><span class="HL HL${i}">${LET[i]}</span>${o}</div>`).join('')}</div>
+          <div class="lbl">Results</div><div class="res">${res}</div>${wagerStandings(t, null)}</div>
+        <div class="hfoot">${btn('End Game →', 'gold', t, s.b - 0.6)}${btn('End', 'pink')}</div>`;
+    }
+    function recapItems(host) {
+      const qs = [Q1, Q2, FQ];
+      return qs.map(q => {
+        if (host) {
+          const right = ORDER.filter(p => isRight(q, p)).length;
+          return `<div class="rc"><div class="rc-h ${right ? 'ok' : 'no'}"><span class="num">${q.n}.</span><span class="tx">${q.wager ? '🪙 ' : ''}${q.text}</span><span class="pts ok">${right}/3 ✓</span></div><div class="rc-f">✓ ${q.opts[q.correct]} · 💡 ${q.fact}</div></div>`;
+        }
+        const a = q.ans.sam, ok = isRight(q, 'sam');
+        const p = q.wager ? `<span class="pts ok">Bet ${fmt(WAGER.sam.bet)} · +${fmt(WAGER.sam.bet)}</span>` : ok ? `<span class="pts ok">+${fmt(pts(a))}</span>` : '';
+        const round = `<div class="rc-round">Round ${q.round}${q.round === 2 ? ' <span class="xpill rc-tag">🃏 Joker round (×2)</span>' : ''}</div>`;
+        return `${round}<div class="rc"><div class="rc-h ${ok ? 'ok' : 'no'}"><span class="num">${q.n}.</span><span class="ic">${ok ? '✓' : '✗'}</span><span class="tx">${q.wager ? '<span class="bpill">🪙 Final Wager</span> ' : ''}${q.text}</span>${p}<span style="opacity:.5">🚩</span></div>
+          <div class="rc-o">${q.opts.map((o, i) => { const c = i === q.correct, w = i === a.pick && !c; return `<div class="${c ? 'c' : w ? 'w' : ''}"><b style="min-width:9px">${c ? '✓' : w ? '✗' : ''}</b><b>${LET[i]}.</b>${o}</div>`; }).join('')}</div>
+          <div class="rc-f">💡 ${q.fact}</div></div>`;
+      }).join('');
+    }
+    function hostFin(t) {
+      return `<div class="hbar"><span class="hb-home">‹ Home</span><span class="t big">Game Over</span><span class="cnt">3 / 30</span></div>
+        <div class="body"><div data-tw="scroll" data-k="85:0,92:0,96:1" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:8px">
+          <div class="lbr">${FINAL_ORDER.map((p, i) => `<div class="lr"><span class="rk">${['🥇', '🥈', '🥉'][i]}</span>${av(p)}<span class="n">${P[p].n}<small>${CORRECT[p]}✓</small></span><span class="sc">${fmt(FINAL[p])}</span></div>`).join('')}</div>
+          <div class="lbl">Awards</div>${AWARDS.map(a => `<div class="awl"><span class="i">${a.i}</span><div><small>${a.t}</small><b>${P[a.p].n}</b><small>${a.d}</small></div></div>`).join('')}
+          <div class="lbl">Question recap</div>${recapItems(true)}</div></div>
+        <div class="hfoot">${btn('Share results')}${btn('New Game', 'gold')}</div>`;
+    }
+
+    /* ── Sam's screens ── */
+    function samLobby(t) {
+      const J = JOIN.sam, name = P.sam.n;
+      if (t < J) {
+        const n = Math.max(0, Math.min(name.length, Math.floor((t - (J - 1.6)) / 0.28)));
+        return `<div class="hbar"><span class="t big" style="color:var(--tx)">Quiz<span style="color:var(--g)">Blitz</span></span></div>
+          <div class="body"><div class="h2">Join a game</div><div class="sm mut" style="margin-top:-4px">Enter your name to join the game.</div>
+            <div class="ready">Ready to join · enter your name below</div>
+            <div class="field"><span class="flbl">Your name</span><div class="inp${n ? ' focus' : ' ph'}">${n ? name.slice(0, n) : 'e.g. Sam'}${n ? '<i class="caret"></i>' : ''}</div></div>
+            <div class="field"><span class="flbl">Your icon</span><div class="icons">${['🦊', '🐱', '🐼', '🦁', '🐯', '🐸', '🐶', '🦄', '🐙', '🐵', '🐧', '🐨'].map(a => `<span class="${a === '🐱' && n >= name.length ? 'on' : a === '🦊' && n < name.length ? 'on' : ''}">${a}</span>`).join('')}</div></div>
+            <div class="field"><span class="flbl">Room code</span><div class="inp code">QZ7K</div></div>
+            <div class="grow"></div>${btn('Join game', 'gold', t, J - 0.3, n < name.length)}</div>`;
+      }
+      const others = ORDER.filter(p => p !== 'sam' && t >= JOIN[p]);
+      return `<div class="hbar"><span class="t big" style="color:var(--tx)">Quiz<span style="color:var(--g)">Blitz</span></span></div>
+        <div class="body"><div><div class="h2">You're in!</div><div class="gtitle">${TITLE}</div></div>
+          <div class="chips"><span class="qb-chip">❓ 3 questions</span><span class="qb-chip">🏷️ 3 categories</span><span class="qb-chip pur">${jc} Joker</span><span class="qb-chip gold">🪙 Final Wager</span></div>
+          <div class="card modes"><div class="hd">Game modes <span>Hide how it works</span></div>
+            <div>${jc} <b>Joker.</b> Pick one round from Round 2 to score double base points. If you don't pick one, it's used on the last round.</div>
+            <div>🪙 <b>Final Wager.</b> Before the last question, bet some of your points. Right answer wins the bet, wrong answer loses it.</div></div>
+          <div class="card you">${av('sam')}<div><b style="font-size:14px">Sam</b><div class="sm mut">That's you</div></div></div>
+          <div class="lbl">${others.length + 1} players joined</div>
+          <div class="others">${others.map(p => `<span class="${pop(t, JOIN[p])}" style="display:inline-flex;gap:5px;align-items:center">${av(p)} ${P[p].n}</span>`).join('')}</div>
+          <div class="grow"></div><div class="wait"><span class="spin"></span>Waiting for host to start the game</div></div>`;
+    }
+    function samQ(q, s, t) {
+      const a = q.ans.sam, picked = t >= a.t, n = ORDER.filter(p => t >= q.ans[p].t).length;
+      const jk = q.jokers && q.jokers.includes('sam');
+      return `${gb(qLabel(q), t, q.wager ? wagerPill() : jk ? '<span class="xpill">×2 round</span>' : '', ring(s.a, 20), (q.n - 1) * 33.3 + 16)}
+        <div class="body"><div class="qband"><div class="meta"><span class="diff">${q.diff}</span><span class="cattag">${q.cat[0].toUpperCase() + q.cat.slice(1)}</span></div><div class="qt">${q.text}</div></div>
+          <div class="ans">${q.opts.map((o, i) => `<div class="a${picked ? (i === a.pick ? ' sel' : ' dim') : ''}"><span class="L L${i}">${LET[i]}</span>${o}${tapping(t, a.t) && i === a.pick ? '<i class="tap"></i>' : ''}</div>`).join('')}</div>
+          <div class="grow"></div>${n ? `<div class="answered">${n} of 3 answered</div>` : ''}${picked ? `<div class="locked-in ${pop(t, a.t)}">✓ Answer locked in</div>` : ''}</div>
+        ${pfoot()}`;
+    }
+    function samRev(q, s, t) {
+      const a = q.ans.sam, ok = isRight(q, 'sam'), total = ok ? pts(a) : 0, fa = q.ans[q.fastest];
+      const note = !ok ? `Fastest right answer got +${q.top} speed` : a.mult > 1 ? 'Joker round: base points doubled' : `${P[q.fastest].n} was ${((a.ms - fa.ms) / 1000).toFixed(1)} s quicker (+${q.top})`;
+      const bar = ok ? `<div class="bar2"><i class="b" style="width:${100 * a.base / total}%"></i>${a.mult > 1 ? `<i class="j" style="width:${100 * a.base / total}%"></i>` : ''}<i class="s" style="width:${100 * a.speed / total}%"></i></div>` : '';
+      return `${gb('Result', t, q.jokers && q.jokers.includes('sam') ? '<span class="xpill">×2 round</span>' : '')}
+        <div class="body"><div class="verdict">${ok ? `+${fmt(total)} pts` : 'Incorrect'}</div>
+          <div class="qband" style="padding-top:2px"><div class="meta"><span class="diff">${q.diff}</span></div><div class="qt" style="font-size:12.5px">${q.text}</div></div>
+          <div class="ans">${q.opts.map((o, i) => `<div class="a${i === q.correct ? ' ok' : i === a.pick ? ' no' : ''}" style="padding:7px 10px"><span class="L L${i}">${LET[i]}</span>${o}</div>`).join('')}</div>
+          <div class="grow"></div><div class="fact">💡 ${q.fact}</div>
+          <div class="pc${ok ? '' : ' bad'}"><div class="v"><span ${tw('count', 0, total, s.a + 0.4, 1.2, ok ? '+' : '')}>${ok ? '+0' : '0'}</span></div>
+            <div class="s">${ok ? 'Correct!' : 'Incorrect'}</div>
+            ${ok ? `<div class="chs"><span class="ch base">${fmt(a.base * (a.mult || 1))} base${a.mult > 1 ? ' ×2' : ''}</span><span class="ch spd">+${a.speed} speed</span></div>${bar}` : ''}
+            <div class="note">${note}</div></div></div>
+        ${pfoot(`Next question in ${timerTxt(s.a, 6)}s`, true)}`;
+    }
+    function samLb(s, t) {
+      const lb = s.lb, rank = lb.rows.findIndex(r => r.p === 'sam');
+      let card = '';
+      if (s.joker) {
+        const J = JOKER.sam;
+        card = t < J.t + 0.35
+          ? `<div class="card" style="border-color:rgba(139,92,246,.5)"><div style="display:flex;gap:10px;align-items:center"><span class="jcard big">J</span><div><b style="font-size:13px">Play your Joker?</b><div class="sm" style="opacity:.85">Next: <b>Round 2</b> · Round 2 of 3 · 1 question</div><div class="sm" style="opacity:.75">Double base points for every question in it. One per game.</div></div></div>
+              <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">${btn('Play Joker on Round 2', 'purple', t, J.t)}${btn('Save it for later', 'ghost sm')}</div></div>`
+          : `<div class="card ${pop(t, J.t + 0.35)}" style="font-size:11px"><span class="xpill">×2</span> Joker played on <b>Round 2</b>: base points doubled this round.</div>`;
+      } else card = '<div class="card" style="font-size:11px">🪙 Next: <b>Final Wager</b>. Bet some of your points on the last question.</div>';
+      const rows = lb.rows.map((r, i) => {
+        const holds = s.joker ? !jokerPlayed(r.p, t) : r.p === 'alex';
+        const now = s.joker && jokerPlayed(r.p, t);
+        return `<div class="lr${r.p === 'sam' ? ' me' : ''}"><span class="rk">${i + 1}</span>${av(r.p)}<span class="n">${P[r.p].n}${r.p === 'sam' ? ' (you)' : ''} <small>+${fmt(r.d)}</small>${holds ? jc : ''}${now ? '<span class="xpill">×2 next</span>' : ''}</span><span class="sc">${fmt(r.s)}</span></div>`;
+      }).join('');
+      const lead = lb.rows[0], second = lb.rows[1];
+      return `${gb(`End of Round ${lb.n} of 3 · Next: Round ${lb.n + 1}`, t, `<span class="gb-s" style="color:var(--g);font-weight:800">#${rank + 1} of 3</span>`, '', lb.n * 33.3)}
+        <div class="body">${card}<div class="lbr">${rows}</div>
+          <div class="leading">🏆 Leading <b>${P[lead.p].n}</b> by <b>${fmt(lead.s - second.s)}</b> pts</div></div>
+        ${pfoot('Waiting for host…')}`;
+    }
+    function samWager(s, t) {
+      const w = WAGER.sam, locked = t >= w.lock, allIn = t >= w.allIn + 0.1;
+      const amt = allIn ? w.bet : 0, pct = 100 * amt / w.score;
+      const n = ORDER.filter(p => t >= WAGER[p].lock).length;
+      return `<div class="gb"><div class="gb-row"><div class="gb-l"><div class="gb-t">Final question</div></div><span class="bpill">${locked ? 'Bet locked' : 'Place your bet'}</span></div></div>
+        <div class="body"><div class="card wcat"><div class="sm mut">Category</div><div class="big">Music</div><div class="sm mut">Medium · the question stays hidden until bets close</div></div>
+          ${locked
+            ? `<div class="card wlock ${pop(t, w.lock)}"><div class="sm mut">Bet locked</div><div class="v">${fmt(w.bet)}</div><div class="sm mut">Right: ${fmt(w.score + w.bet)} · Wrong: ${fmt(Math.max(0, w.score - w.bet))}</div></div>`
+            : `<div class="bet"><div class="sm mut">You bet</div><div class="v"><span ${tw('count', 0, w.bet, w.allIn, 0.5)}>0</span></div><div class="sm mut">of your ${fmt(w.score)} pts (max ${fmt(w.score)})</div></div>
+               <div class="slider"><i class="fill" ${tw('w', 0, 100, w.allIn, 0.5)}></i><i class="thumb" ${tw('l', 0, 100, w.allIn, 0.5)}></i></div>
+               <div class="presets">${btn('None', 'ghost sm')}${btn('25%', 'ghost sm')}${btn('Half', 'ghost sm')}${btn('All in', 'ghost sm', t, w.allIn)}</div>
+               <div class="ifs"><div class="r">If right<b>${fmt(w.score + amt)}</b></div><div class="w">If wrong<b>${fmt(w.score - amt)}</b></div></div>`}
+          <div class="answered">${n} of 3 locked in</div>
+          <div class="tline"><i ${tw('w', 100, 0, s.a, 20)}></i></div>
+          <div class="grow"></div>${locked ? '' : btn('Lock in bet', 'gold', t, w.lock - 0.3)}</div>`;
+    }
+    function samWrev(s, t) {
+      const w = WAGER.sam;
+      return `${gb('Result', t, wagerPill())}
+        <div class="body"><div data-tw="scroll" data-k="64.5:0,66.5:1" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:8px">
+          <div class="verdict">+${fmt(w.bet)} pts</div>
+          <div class="qband" style="padding-top:2px"><div class="meta"><span class="diff">${FQ.diff}</span></div><div class="qt" style="font-size:12.5px">${FQ.text}</div></div>
+          <div class="ans">${FQ.opts.map((o, i) => `<div class="a${i === FQ.correct ? ' ok' : ''}" style="padding:7px 10px"><span class="L L${i}">${LET[i]}</span>${o}</div>`).join('')}</div>
+          <div class="fact">💡 ${FQ.fact}</div>
+          <div class="pc"><div class="v"><span ${tw('count', 0, w.bet, s.a + 0.4, 1.2, '+')}>+0</span></div><div class="s">Correct!</div><div class="chs"><span class="ch bet">Bet ${fmt(w.bet)} · right</span></div><div class="note">Final Wager: speed doesn't count</div></div>
+          ${wagerStandings(t, 'sam')}</div></div>
+        ${pfoot()}`;
+    }
+    function awards(t, who) {
+      if (t < 70.9) return `<div class="aw-ov"><div class="aw-intro">🏆<b>Awards</b></div></div>`;
+      const i = Math.min(2, Math.floor((t - 70.9) / 3.3)), a = AWARDS[i], mine = a.p === who;
+      return `<div class="aw-ov"><div class="pips">${AWARDS.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</div>
+        <div class="aw-card${mine ? ' mine' : ''} ${pop(t, 70.9 + i * 3.3)}"><div class="aw-i">${a.i}</div><div class="aw-t">${a.t}</div><div class="aw-s">${a.s}</div>
+          <div class="aw-w">${P[a.p].n}${mine ? ' <span class="youtag">You!</span>' : ''}</div><div class="aw-d">${a.d}</div></div><div class="skip">Skip ›</div></div>`;
+    }
+    function samFin(t) {
+      const col = (p, place, h, bg) => `<div>${av(p)}<span class="pn">${P[p].n}</span><span class="ps">${fmt(FINAL[p])}</span><div class="blk" style="height:${h}px;background:${bg}">${place}</div></div>`;
+      return `<div class="gb"><div class="gb-row"><div class="gb-l"><div class="gb-t">${TITLE}</div><div class="gb-s">Final results</div></div><span class="gb-s" style="color:var(--g)">Game over</span></div></div>
+        <div class="body"><div data-tw="scroll" data-k="83.5:0,86:0.32,88.5:0.32,91:0.62,93:0.62,96:1" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:8px">
+          <div class="fin-hd"><div class="e">🎉</div><b>Game over!</b></div>
+          <div class="pod">${col('alex', 2, 38, '#d9d6f0')}${col('sam', 1, 56, 'var(--g)')}${col('jo', 3, 28, '#d79a5e')}</div>
+          <div class="lbr">${FINAL_ORDER.map((p, i) => `<div class="lr${p === 'sam' ? ' me' : ''}"><span class="rk">${i + 1}</span><span class="n">${P[p].n}${p === 'sam' ? ' (you)' : ''} <small>${CORRECT[p]}✓</small></span><span class="sc">${fmt(FINAL[p])}${p === 'jo' ? ' 🔥' : ''}</span></div>`).join('')}</div>
+          <div class="fstats"><div><b>2<small> / 3</small></b><div>Correct</div></div><div><b>67<small>%</small></b><div>Accuracy</div></div><div><b>4,580</b><div>Score</div></div></div>
+          <div class="lbl">Awards</div>${AWARDS.map(a => `<div class="awl${a.p === 'sam' ? ' mine' : ''}"><span class="i">${a.i}</span><div><small>${a.t}${a.p === 'sam' ? ' · You!' : ''}</small><b>${P[a.p].n}</b><small>${a.d}</small></div></div>`).join('')}
+          <div class="lbl" style="margin-top:4px">Question recap</div>${recapItems(false)}
+        </div></div>
+        <div class="ffoot">${btn('📤 Share my result', 'brown sm')}${btn('Play Again', 'brown sm')}</div>`;
+    }
+
+    function screen(who, s, t) {
+      const host = who === 'host';
+      let h;
+      switch (s.id) {
+        case 'lobby': h = host ? hostLobby(t) : samLobby(t); break;
+        case 'intro': h = intro(s, who); break;
+        case 'cat': h = catSplash(s); break;
+        case 'q': h = host ? hostQ(s.q, s, t) : samQ(s.q, s, t); break;
+        case 'rev': h = host ? hostRev(s.q, s, t) : samRev(s.q, s, t); break;
+        case 'lb': h = host ? hostLb(s, t) : samLb(s, t); break;
+        case 'wager': h = host ? hostWager(s, t) : samWager(s, t); break;
+        case 'wrev': h = host ? hostWrev(s, t) : samWrev(s, t); break;
+        case 'awards': h = (host ? hostWrev(SCENES[12], 69) : samWrev(SCENES[12], 69)) + awards(t, who); break;
+        default: h = host ? hostFin(t) : samFin(t);
+      }
+      return `<div class="scn${t - s.a < 0.4 ? ' fresh' : ''}">${h}</div>`;
+    }
+
+    const CUT = 25, JUMP = 70.5;
+    const recap = CHAPTERS.find(c => c.t === 81);
+    return {
+      END: CUT + END - JUMP, still: 6.0, maxScale: 1.1,
+      tmap: t => (t < CUT ? t : t - CUT + JUMP),
+      chapters: CHAPTERS.filter(c => c.t < CUT).concat([
+        { t: CUT, n: 'Awards', c: 'Two rounds later (a Joker round and a Final Wager), the awards play on every phone. Sam came from 3rd to 1st.' },
+        { t: CUT + recap.t - JUMP, n: recap.n, c: recap.c }]),
+      devices: [{ who: 'host', host: true, label: '<small>Host</small>Quiz phone' }, { who: 'sam', label: "<small>Player</small>🐱 Sam's phone" }],
+      screen: (who, o) => screen(who, sceneAt(o), o)
+    };
+  })();
+  Demo(document.querySelector('[data-demo="qb"]')).load(QB);
+})();
+</script>
 
 <!-- ============ PAGE INTERACTIONS (vanilla) ============ -->
 <script>

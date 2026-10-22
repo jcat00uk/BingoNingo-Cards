@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BingoNingo</title>
-  <script>!function(){try{var t=JSON.parse(localStorage.getItem('bingoningo_theme_active'));if(t&&typeof t==='object'){var r=document.documentElement;Object.keys(t).forEach(function(k){r.style.setProperty(k,t[k]);});}}catch(e){}}();</script>
+  <script>!function(){var r=document.documentElement,bg='#121212';try{var t=JSON.parse(localStorage.getItem('bingoningo_theme_active'));if(t&&typeof t==='object'){Object.keys(t).forEach(function(k){r.style.setProperty(k,t[k]);});if(t['--bg-page'])bg=t['--bg-page'];}}catch(e){}r.style.backgroundColor=bg;}();</script>
   <link rel="stylesheet" href="startmenu.css?v=.0.0">
 </head>
 <!-- FIX 2: Removed hardcoded class="night-mode" — night mode is now

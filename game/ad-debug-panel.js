@@ -7,12 +7,14 @@
   var SESSION_MS      =  4 * 60 * 60 * 1000;
   var SESSION_CAP     = 3;
   var MIN_DURATION_MS =  3 * 60 * 1000;
+  var PRELOAD_DEBOUNCE_MS = 20 * 1000;
 
   var KEY_LAST_AD       = 'bingoningo_last_ad_ts';
   var KEY_LAST_ACTIVITY = 'bingoningo_last_activity_ts';
   var KEY_SESSION_START = 'bingoningo_session_start';
   var KEY_SESSION_COUNT = 'bingoningo_session_ad_count';
   var KEY_GAME_START    = 'bingoningo_game_start_ts';
+  var SS_KEY_LAST_PRELOAD_ATTEMPT = 'bingoningo_last_preload_attempt_ts';
 
   var TAP_TARGET    = 7;
   var TAP_WINDOW_MS = 4000;
@@ -63,6 +65,7 @@
     var sessionStart = parseInt(localStorage.getItem(KEY_SESSION_START)  || '0', 10);
     var sessionCount = parseInt(localStorage.getItem(KEY_SESSION_COUNT)  || '0', 10);
     var gameStart    = parseInt(localStorage.getItem(KEY_GAME_START)     || '0', 10);
+    var lastPreloadAttempt = parseInt(sessionStorage.getItem(SS_KEY_LAST_PRELOAD_ATTEMPT) || '0', 10);
 
     var dbg = (window.AdMobManager && window.AdMobManager.getDebugState)
       ? window.AdMobManager.getDebugState()
@@ -77,6 +80,7 @@
       sessionCount:      sessionCount,
       gameStart:         gameStart,
       cooldownMs:        lastAd ? Math.max(0, COOLDOWN_MS - (now - lastAd)) : 0,
+      preloadDebounceMs: lastPreloadAttempt ? Math.max(0, PRELOAD_DEBOUNCE_MS - (now - lastPreloadAttempt)) : 0,
       sessionResetMs:    sessionStart ? Math.max(0, SESSION_MS - (now - sessionStart)) : 0,
       gameDurationMs:    gameStart ? (now - gameStart) : 0,
       adReady:           dbg.adReady,
@@ -117,6 +121,7 @@
         : '?'],
       ['Force test unit', s.forceTestUnit ? '🔀 ON (sample ID)' : 'off (real ID)'],
       ['Ad loaded',     s.adReady     === null ? '?' : (s.adReady     ? '✅ Yes' : '❌ No')],
+      ['Preload debounce', s.preloadDebounceMs > 0 ? '⏳ ' + fmtMs(s.preloadDebounceMs) : '✅ Ready'],
       ['Cooldown',      s.cooldownMs  > 0 ? '⏳ ' + fmtMs(s.cooldownMs) : '✅ Ready'],
       ['Last ad shown', fmtAgo(s.lastAd)],
       ['Session ads',   s.sessionCount + ' / ' + SESSION_CAP + (s.sessionCount >= SESSION_CAP ? ' ⛔ CAPPED' : ' ✅')],

@@ -32,6 +32,12 @@
 
   // sessionStorage key (not localStorage — only needs to survive page navigation, not app restarts)
   var SS_KEY_LAST_PRELOAD_ATTEMPT = 'bingoningo_last_preload_attempt_ts';
+  // Mirrors _adReady into sessionStorage so it survives page navigation — the native
+  // interstitial ad object is a static field that outlives page loads (confirmed: it's
+  // only ever replaced on a new successful load, never nulled on dismiss), but _adReady
+  // itself is plain JS state that resets every page. This key lets the debug panel show
+  // accurate cross-page state instead of the page-local (and often stale) JS flag.
+  var SS_KEY_AD_READY = 'bingoningo_ad_ready';
 
   // Thresholds
   var COOLDOWN_MS      = 20 * 60 * 1000;       // 20 min minimum between ads
@@ -109,8 +115,25 @@
     sessionStorage.setItem(SS_KEY_LAST_PRELOAD_ATTEMPT, String(Date.now()));
 
     _adReady = false;
-    plugin.prepareInterstitial({ adId: getAdUnitId() })
-      .then(function() { _adReady = true; })
+
+    // Timeout guard: prepareInterstitial() can stall indefinitely on a slow/stalled
+    // connection without ever resolving or rejecting, which would otherwise leave
+    // _adReady stuck false forever with no error recorded and no retry scheduled —
+    // the exact "no ad loads until I manually hit Reload" symptom. If the real call
+    // eventually does settle after this fires, its .then()/.catch() below still runs
+    // and is harmless (at worst a redundant _adReady=true or an extra retry).
+    var prepareTimedOut = new Promise(function(resolve) {
+      setTimeout(function() { resolve({ _timedOut: true }); }, 25000);
+    });
+
+    Promise.race([plugin.prepareInterstitial({ adId: getAdUnitId() }), prepareTimedOut])
+      .then(function(result) {
+        if (result && result._timedOut) {
+          throw new Error('prepareInterstitial timed out after 25s');
+        }
+        _adReady = true;
+        sessionStorage.setItem(SS_KEY_AD_READY, '1');
+      })
       .catch(function(e) {
         console.warn('[AdMobManager] prepareInterstitial failed:', e);
         recordError('prepareInterstitial', e);
@@ -119,6 +142,51 @@
           setTimeout(function() { preloadInterstitial(delay * 2); }, delay);
         }
       });
+  }
+
+  // Request UMP consent info; show form if required for EEA/UK/Switzerland users, and reveal
+  // the "Ad preferences" entry point when Google requires one. Runs once per page and returns
+  // the same promise to every caller: the menu calls it on its own (first thing on first run,
+  // before What's New), the game pages through init(). Never rejects.
+  // Timeout guard: requestConsentInfo() is a network call to Google's UMP servers
+  // with no timeout of its own — on a stalled connection its callback may never
+  // fire at all (neither resolve nor reject), which would otherwise leave this
+  // entire chain hung forever with no error ever recorded.
+  var _consentPromise = null;
+  function requestConsent() {
+    if (_consentPromise) return _consentPromise;
+    var plugin = getPlugin();
+    if (!isAdsEnabled() || !isNative() || !plugin) return (_consentPromise = Promise.resolve());
+
+    var consentTimedOut = new Promise(function(resolve) {
+      setTimeout(function() { resolve({ _timedOut: true }); }, 8000);
+    });
+    _consentPromise = Promise.race([plugin.requestConsentInfo({}), consentTimedOut])
+      .then(function(consentInfo) {
+        if (consentInfo && consentInfo._timedOut) {
+          console.warn('[AdMobManager] consent info timed out after 8s');
+          return;
+        }
+        _consentInfo = consentInfo;
+        // Revocation entry point: only shown when Google requires it (EEA/UK/Switzerland users)
+        if (consentInfo.privacyOptionsRequirementStatus === 'REQUIRED') {
+          var adPrefRow = document.getElementById('adPreferencesRow');
+          var adPrefBtn = document.getElementById('adPreferencesBtn');
+          if (adPrefRow) adPrefRow.style.display = '';
+          if (adPrefBtn) adPrefBtn.addEventListener('click', showPrivacyOptions);
+        }
+        // Show initial consent form only if user hasn't consented yet
+        if (consentInfo.isConsentFormAvailable && consentInfo.status === 'REQUIRED') {
+          return plugin.showConsentForm();
+        }
+      })
+      .catch(function(e) {
+        console.warn('[AdMobManager] consent info failed:', e);
+      })
+      .then(function() {
+        if (window.Analytics) window.Analytics.enable();
+      });
+    return _consentPromise;
   }
 
   function init() {
@@ -132,6 +200,7 @@
     // the call was accepted — not that the ad was actually displayed.
     plugin.addListener('interstitialAdOpened', function() {
       _adReady = false;
+      sessionStorage.removeItem(SS_KEY_AD_READY);
       if (window.Analytics) window.Analytics.adShown();
     });
 
@@ -152,32 +221,16 @@
       recordError('interstitialAdFailedToShow', e);
     });
 
-    // Request UMP consent info; show form if required for EEA/UK/Switzerland users.
-    // Always proceed to initialize regardless of outcome — AdMob serves appropriate
-    // ad type (personalized or non-personalized) based on the consent result.
-    plugin.requestConsentInfo({})
-      .then(function(consentInfo) {
-        _consentInfo = consentInfo;
-        // Revocation entry point: only shown when Google requires it (EEA/UK/Switzerland users)
-        if (consentInfo.privacyOptionsRequirementStatus === 'REQUIRED') {
-          var adPrefRow = document.getElementById('adPreferencesRow');
-          var adPrefBtn = document.getElementById('adPreferencesBtn');
-          if (adPrefRow) adPrefRow.style.display = '';
-          if (adPrefBtn) adPrefBtn.addEventListener('click', showPrivacyOptions);
-        }
-        // Show initial consent form only if user hasn't consented yet
-        if (consentInfo.isConsentFormAvailable && consentInfo.status === 'REQUIRED') {
-          return plugin.showConsentForm();
-        }
-      })
-      .catch(function(e) {
-        console.warn('[AdMobManager] consent info failed:', e);
-      })
+    // Consent first; always proceed to initialize regardless of outcome — AdMob serves
+    // the appropriate ad type (personalized or non-personalized) based on the consent result.
+    requestConsent()
       .then(function() {
-        if (window.Analytics) window.Analytics.enable();
         plugin.initialize({
           testingDevices: TEST_DEVICE_IDS,
-          initializeForTesting: (typeof APP_BUILD_MODE === 'undefined' || APP_BUILD_MODE !== 'release')
+          // Note: despite the name, this native plugin uses this flag only to decide
+          // whether to apply testingDevices at all — it has no other effect. Always
+          // true so registered test devices work on release builds too.
+          initializeForTesting: true
         })
           .then(function() { preloadInterstitial(); })
           .catch(function(e) {
@@ -258,21 +311,27 @@
     var sessionCount = parseInt(localStorage.getItem(KEY_SESSION_COUNT) || '0', 10);
     if (sessionCount >= SESSION_CAP) return;
 
-    if (!_adReady) return;
     var plugin = getPlugin();
     if (!plugin) return;
 
+    // Not gating on _adReady here: the native interstitial ad object is a static
+    // field that outlives page navigation, but _adReady is plain JS state that
+    // resets on every page load in this multi-page app — it goes stale (false)
+    // far more often than the native ad actually is. showInterstitial() itself
+    // already rejects cleanly if there's genuinely nothing loaded (handled below).
     plugin.showInterstitial()
       .catch(function(e) {
         console.warn('[AdMobManager] showInterstitial failed:', e);
         recordError('showInterstitial', e);
         _adReady = false;
+        sessionStorage.removeItem(SS_KEY_AD_READY);
         preloadInterstitial();
       });
   }
 
   window.AdMobManager = {
     init:                init,
+    requestConsent:      requestConsent,
     onEnterGameMode:     onEnterGameMode,
     recordGameStart:     recordGameStart,
     maybeShowAd:         maybeShowAd,
@@ -282,7 +341,10 @@
     // Debug helpers — used by AdDebugPanel only
     getDebugState: function () {
       return {
-        adReady:          _adReady,
+        // Read from sessionStorage, not the JS _adReady var — the latter resets on
+        // every page navigation and would misreport "No" even when the native ad
+        // (a static field that outlives page loads) is genuinely still cached.
+        adReady:          sessionStorage.getItem(SS_KEY_AD_READY) === '1',
         initialised:      _initialised,
         lastError:        _lastError,
         initError:        _initError,

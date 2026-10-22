@@ -1,6 +1,29 @@
 window.CHANGELOG = {
 
-  '20260703-225835': {
+  '20261022-085102': {
+    changes: [
+      { tag: 'fix', text: 'Fixed Text-to-Speech not speaking on first use before any voice settings were saved', editions: 'full' },
+      { tag: 'fix', text: 'Your chosen voice, volume and speed are now used for everything spoken, including Check Card, Confirm Win and tapping the call text', editions: 'full' },
+      { tag: 'fix', text: 'The voice list now plays the voice you pick', editions: 'full' },
+      { tag: 'fix', text: 'Auto Call now pauses if you leave the app, so no numbers are called while you are away — press ▶ to carry on', editions: 'full' },
+      { tag: 'new', text: 'When all 90 numbers have been called, a message tells you to press End', editions: 'full' },
+      { tag: 'fix', text: '"Win missed" now shows when Next is pressed before a win is confirmed', editions: 'full' },
+      { tag: 'update', text: 'Checking a card with no win no longer plays the win celebration', editions: 'full' },
+      { tag: 'update', text: 'Called numbers are easier to read in every theme', editions: 'full' },
+      { tag: 'update', text: 'Remaining shows 90 before a game starts', editions: 'full' },
+      { tag: 'fix', text: 'Theme presets can be tried one after another without Settings closing', editions: 'full' },
+      { tag: 'fix', text: 'Print Cards now works without an internet connection', editions: 'full' },
+      { tag: 'fix', text: 'Closing the share screen after Download PDF no longer shows an error', editions: 'full' },
+      { tag: 'fix', text: 'Remove Ads and Restore now tell you if something went wrong', editions: 'full' },
+      { tag: 'update', text: 'Bigger, easier-to-tap numbers on player cards, and larger cards on tablets', editions: 'all' },
+      { tag: 'fix', text: 'The clock and battery icons at the top stay visible on light themes', editions: 'all' },
+      { tag: 'fix', text: 'The back button now closes open menus and pop-ups before leaving the screen', editions: 'all' },
+      { tag: 'fix', text: 'Ad privacy choices are asked for first on a new install, and can be changed from Ad preferences on the main menu', editions: 'all' },
+      { tag: 'fix', text: 'Less of a white flash when moving between screens', editions: 'all' }
+    ]
+  },
+
+  '20261020-2133': {
     changes: [
       { tag: 'new', text: 'Added a Keep Screen On toggle to the player card theme panel', editions: 'all' },
       { tag: 'new', text: 'Added a voice picker and volume slider to Text-to-Speech settings', editions: 'full' },
