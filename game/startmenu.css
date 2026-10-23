@@ -16,7 +16,9 @@ body {
   background-color: var(--bg-page);
   color: var(--text-primary);
   box-sizing: border-box;
+  padding-bottom: max(env(safe-area-inset-bottom), 8px);
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -52,9 +54,10 @@ input, textarea {
 /* ============================= */
 
 h1 {
-  font-size: 3rem;
+  font-size: clamp(2.25rem, 6.5vh, 3rem);
+  line-height: 1.1;
   color: var(--title-text);
-  margin: 0 0 16px 0;
+  margin: auto 0 0 0;
   animation: glow 1.5s ease-in-out 3;
 }
 
@@ -76,13 +79,13 @@ h1 {
 .menu-buttons {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 16px;
 }
 
 .menu-buttons button {
-  padding: 12px 24px;
+  padding: 11px 24px;
   font-size: 18px;
   border-radius: 8px;
   cursor: pointer;
@@ -111,138 +114,409 @@ button:not(:disabled):active {
   filter: brightness(0.9);
 }
 
-/* FIX 3: Removed !important. Guard with :not(:disabled) so disabled buttons
-   don't flash limegreen on tap. */
 /* ============================= */
-/* 4. HOW IT WORKS               */
+/* 4. SECTION TILES + SHEET      */
 /* ============================= */
 
-.how-it-works {
+/* Logo takes whatever height is left so the whole menu fits one screen;
+   absolute img so it scales to the box rather than sizing it */
+.menu-logo {
+  flex: 1 1 0;
+  min-height: 90px;
+  max-height: clamp(300px, 35vh, 420px);
+  width: 100%;
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.menu-logo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 2x2 tiles — each opens its section in the bottom sheet, see startmenu.js */
+.menu-tiles {
   width: 100%;
   max-width: 320px;
-  margin: 0 auto 4px auto;
-  text-align: left;
-  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
-#pageThemeSection {
-  margin-bottom: 8px;
-}
-
-.how-it-works-btn {
-  width: 100%;
+.menu-tile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  box-sizing: border-box;
   background-color: var(--action-btn-bg);
   border: 1px solid #444;
   color: var(--action-btn-text);
   font-size: 14px;
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-align: left;
   cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   min-width: unset;
-  transition: background 0.2s;
 }
 
 @media (hover: hover) {
-  .how-it-works-btn:hover {
+  .menu-tile:hover {
     filter: brightness(1.15);
   }
 }
 
-.how-it-works-btn[aria-expanded="true"] .how-arrow {
-  transform: rotate(180deg);
-  display: inline-block;
+.sec-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.how-it-works-btn[aria-expanded="true"] {
-  border-radius: 8px 8px 0 0;
+.sec-title {
+  flex: 1;
+  text-align: left;
 }
 
-.how-arrow {
+/* Screen on tile — keep the label on one line beside its switch */
+#wakeLockRow .sec-title {
+  white-space: nowrap;
+}
+
+@media (max-width: 359px) {
+  #wakeLockRow .sec-icon {
+    display: none;
+  }
+}
+
+/* Footer — version (7-tap ad debug target) + Ad preferences on one line */
+.menu-footer {
+  margin-top: auto;
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-size: 11px;
-  color: #666;
-  transition: transform 0.2s;
-  display: inline-block;
+  color: var(--text-muted, #888);
 }
 
-.how-it-works-body {
+#adPreferencesRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#adPreferencesBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted, #888);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 4px 2px;
+  text-decoration: underline;
+}
+
+/* Bottom sheet — one section body at a time */
+.menu-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.menu-sheet[hidden],
+.menu-sheet-body[hidden] {
+  display: none;
+}
+
+.menu-sheet-backdrop {
   position: absolute;
-  top: 100%;
-  left: -1px;
-  right: -1px;
-  z-index: 100;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  animation: sheetFade 0.2s ease-out;
+}
+
+.menu-sheet-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  max-height: 88vh;
+  max-height: 88dvh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 8px 18px max(18px, env(safe-area-inset-bottom));
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  padding: 10px 14px;
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  text-align: left;
   font-size: 13px;
+  line-height: 1.45;
   color: var(--text-primary);
-  line-height: 1.55;
-  max-height: 240px;
-  overflow-y: auto;
+  animation: sheetUp 0.22s ease-out;
 }
 
-.how-it-works-body strong {
+@keyframes sheetFade {
+  from { opacity: 0; }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+}
+
+.menu-sheet-grip {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  margin: 0 auto 8px auto;
+}
+
+.menu-sheet-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.menu-sheet-head strong {
+  flex: 1;
+  font-size: 16px;
+}
+
+.menu-sheet-close {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--btn-bg);
+  border: 1px solid var(--border);
+  color: var(--btn-text);
+  font-size: 14px;
+  cursor: pointer;
+  min-width: unset;
+  padding: 0;
+}
+
+.menu-sheet-body strong {
   color: var(--text-primary);
 }
 
-.how-it-works-body p {
+.menu-sheet-body p {
   margin: 0;
 }
 
-.how-it-works-body a {
+.menu-sheet-body a {
   color: #7cb8f0;
   text-decoration: none;
 }
 @media (hover: hover) {
-  .how-it-works-body a:hover {
+  .menu-sheet-body a:hover {
     text-decoration: underline;
   }
 }
 
-.how-play-along {
-  margin-top: 10px !important;
+/* How it works — numbered icon steps */
+.how-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 10px;
 }
 
-.how-play-row {
+.how-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.how-step-icon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--bg-cell, #2a2a2a);
+  border: 1px solid var(--border);
+  color: var(--accent);
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  line-height: 1.6;
+  justify-content: center;
 }
 
-.how-play-platform {
-  
-  margin-top: 10px;
-  line-height: 1.8;
+.how-step-icon svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.qr-btn {
+.how-step-text,
+.friends-sub {
+  color: var(--text-muted);
+}
+
+.how-hint-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.how-hint-dot {
   display: inline-flex;
   align-items: center;
-  padding: 1px 7px;
-  font-size: 11px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  color: var(--btn-text);
-  border-radius: 5px;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(160, 180, 210, 0.7);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.tour-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tour-btn {
+  flex: 1;
+  padding: 9px 8px;
+  background: var(--btn-bg, #2a2a2a);
+  border: 1px solid var(--border, #555);
+  color: var(--btn-text, #eee);
+  border-radius: 999px;
+  font-size: 12px;
   cursor: pointer;
   min-width: unset;
-  line-height: 1.6;
-  transition: background 0.15s;
 }
-@media (hover: hover) {
-  .qr-btn:hover {
-    background-color: var(--btn-hover);
-    filter: brightness(1.15);
-  }
+
+/* Play with friends — device tabs, big QR, share/copy */
+.friends-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.friends-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  width: 100%;
+  padding: 3px;
+  box-sizing: border-box;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.friends-tabs button {
+  padding: 8px 6px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: unset;
+}
+
+.friends-tabs button[aria-selected="true"] {
+  background: var(--action-btn-bg);
+  color: var(--action-btn-text);
+}
+
+.friends-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.friends-panel[hidden] {
+  display: none;
+}
+
+/* White quiet zone so the code scans on every theme */
+.friends-qr {
+  background: #fff;
+  padding: 10px;
+  border-radius: 12px;
+  line-height: 0;
+}
+
+.friends-qr img {
+  width: 180px;
+  height: 180px;
+  display: block;
+}
+
+.friends-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+}
+
+.friends-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  min-width: unset;
+}
+
+.friends-actions svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.friends-share {
+  background: var(--action-btn-bg);
+  border: 1px solid #444;
+  color: var(--action-btn-text);
+}
+
+.friends-copy {
+  background: var(--btn-bg);
+  border: 1px solid var(--border);
+  color: var(--btn-text);
 }
 
 
@@ -259,7 +533,7 @@ button:not(:disabled):active {
 
 .btn-subtitle {
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted, #888);
 }
 
 .game-in-progress {
@@ -347,25 +621,6 @@ button:not(:disabled):active {
 /* ============================= */
 /* 7. WAKE LOCK TOGGLE           */
 /* ============================= */
-
-.wake-lock-row {
-  width: 100%;
-  max-width: 320px;
-  margin: 0 auto 20px auto;
-}
-
-.wake-lock-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: var(--action-btn-bg);
-  border: 1px solid #444;
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 14px;
-  color: var(--action-btn-text);
-  cursor: pointer;
-}
 
 .toggle-switch {
   position: relative;

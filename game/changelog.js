@@ -1,6 +1,13 @@
 window.CHANGELOG = {
 
-  '20261022-085102': {
+  '20261023-054053': {
+    changes: [
+      { tag: 'new', text: 'New "Play with friends" section on the main menu — scan a QR code or share a link to get friends playing on Android', editions: 'all' },
+      { tag: 'fix', text: 'Tidier main menu that fits on one screen, with a simpler "How it works" in quick steps', editions: 'all' }
+    ]
+  },
+
+  '20261023-0535': {
     changes: [
       { tag: 'fix', text: 'Fixed Text-to-Speech not speaking on first use before any voice settings were saved', editions: 'full' },
       { tag: 'fix', text: 'Your chosen voice, volume and speed are now used for everything spoken, including Check Card, Confirm Win and tapping the call text', editions: 'full' },
