@@ -1,6 +1,6 @@
 window.CHANGELOG = {
 
-  '20261023-085744': {
+  '20261023-090345': {
     changes: [
       { tag: 'new', text: 'New "Play with friends" section on the main menu — scan a QR code or share a link to get friends playing on Android', editions: 'all' },
       { tag: 'fix', text: 'Tidier main menu that fits on one screen, with a simpler "How it works" in quick steps', editions: 'all' },
