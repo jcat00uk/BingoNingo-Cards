@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Player Bingo Cards</title>
+  <script src="tour-sandbox.js?v=.0.0"></script>
   <script>!function(){var r=document.documentElement,bg='#121212';try{var t=JSON.parse(localStorage.getItem('bingoningo_theme_active'));if(t&&typeof t==='object'){Object.keys(t).forEach(function(k){r.style.setProperty(k,t[k]);});if(t['--bg-page'])bg=t['--bg-page'];}}catch(e){}r.style.backgroundColor=bg;}();</script>
   <link rel="stylesheet" href="playercard.css?v=.0.0">
   <script>
@@ -329,22 +330,41 @@ window.addEventListener('DOMContentLoaded', function () {
 
 <script>
 window.addEventListener('DOMContentLoaded', function () {
-  // Coach-marks tutorial — auto-start on first run (or menu force-flag), replay via i popover
-  function startPlayerTutorial() {
-    if (typeof startTutorial !== 'function' || typeof playerTutorialSteps === 'undefined') return;
-    var pop = document.getElementById('infoPopover');
-    if (pop) pop.classList.remove('show');
-    window._tutPlayerWizard = false;   // set true when the wizard confirms the demo cards
-    startTutorial(playerTutorialSteps, 'bingoningo_player_tutorial_seen');
-  }
+  // Interactive tour — runs in a sandbox of this same page (?tour=1, see tour-sandbox.js).
+  // "Watch tutorial" navigates there; first run offers the tour instead of auto-starting it.
+  var TOUR_URL = 'playgame.html?tour=1';
+  var pop = document.getElementById('infoPopover');
   var watchTutBtn = document.getElementById('watchTutorialBtn');
-  if (watchTutBtn) watchTutBtn.addEventListener('click', startPlayerTutorial);
 
-  var forceTut = sessionStorage.getItem('bingoningo_force_tutorial') === '1';
-  if (forceTut) sessionStorage.removeItem('bingoningo_force_tutorial');
-  if (forceTut || !localStorage.getItem('bingoningo_player_tutorial_seen')) {
+  if (window.TOUR_MODE) {
+    // Sandbox: start the guided steps (everything here is in-memory; Exit tour reloads the real page)
+    if (pop) pop.classList.remove('show');
+    if (watchTutBtn) watchTutBtn.style.display = 'none';
     // Wait for load + a beat so viewport scaling has settled before measuring targets
-    window.addEventListener('load', function () { setTimeout(startPlayerTutorial, 400); });
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        if (typeof startTutorial === 'function' && typeof playerTutorialSteps !== 'undefined') {
+          startTutorial(playerTutorialSteps, 'bingoningo_player_tutorial_seen');
+        } else if (typeof window.tourExit === 'function') {
+          window.tourExit();
+        }
+      }, 400);
+    });
+    return;
+  }
+
+  if (watchTutBtn) {
+    watchTutBtn.addEventListener('click', function () {
+      if (typeof playerTutorialSteps === 'undefined') return;
+      window.location.href = TOUR_URL;
+    });
+  }
+  if (typeof playerTutorialSteps !== 'undefined' && !localStorage.getItem('bingoningo_player_tutorial_seen')) {
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        if (typeof offerTour === 'function') offerTour({ url: TOUR_URL, seenKey: 'bingoningo_player_tutorial_seen' });
+      }, 600);
+    });
   }
 });
 </script>

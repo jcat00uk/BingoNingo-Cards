@@ -1,9 +1,15 @@
 window.CHANGELOG = {
 
-  '20261023-054053': {
+  '20261023-085744': {
     changes: [
       { tag: 'new', text: 'New "Play with friends" section on the main menu — scan a QR code or share a link to get friends playing on Android', editions: 'all' },
-      { tag: 'fix', text: 'Tidier main menu that fits on one screen, with a simpler "How it works" in quick steps', editions: 'all' }
+      { tag: 'fix', text: 'Tidier main menu that fits on one screen, with a simpler "How it works" in quick steps', editions: 'all' },
+      { tag: 'new', text: 'Interactive tours — practise on the real screens by tapping the glowing buttons (or Show me). Nothing is saved, and you can exit at any time', editions: 'all' },
+      { tag: 'new', text: 'Next Win announcement in Text-to-Speech settings — after a win the caller says what is next, e.g. "Next win, two lines"', editions: 'full' },
+      { tag: 'update', text: 'Win State now means "speak wins" and works together with Confirm Win — each win is spoken when you confirm it. On by default', editions: 'full' },
+      { tag: 'update', text: 'With Confirm Win on, the first Next after a win announces the next win on its own, so nobody misses a number', editions: 'full' },
+      { tag: 'update', text: 'Auto Call now waits for the voice to finish before counting down, and Bingo Lingo works at every speed', editions: 'full' },
+      { tag: 'update', text: 'Near win text is clearer — shows who is close, e.g. "BB, CC need 1 · 3 need 2", and the label now reads "Next: Line"', editions: 'full' }
     ]
   },
 

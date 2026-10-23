@@ -1362,7 +1362,7 @@ window.appDemos = demos;
         `<div class="strip">${called.slice(-8).map(n => `<span class="${n === last ? 'last' : ''}">${n}</span>`).join('')}</div>` +
         board(called, last) +
         `<div class="bstat"><i>No Win</i><span>Remaining: ${game ? 90 - called.length : 0}</span></div>` +
-        `<div class="nextwin">${game ? 'Next Win, ' + (fh ? 'Full House' : 'Line') : ''}</div>` +
+        `<div class="nextwin">${game ? 'Next: ' + (fh ? 'Full House' : 'Line') : ''}</div>` +
         `<div class="foot"><span class="cb undo">↩</span><span class="cb">Check<br>Card</span>` +
         (locked ? `<button type="button" class="cb cw go" data-act="win" aria-label="Confirm Win">Confirm<br>Win${tapI(t, w.tap)}</button>` : `<span class="cb cw">Confirm<br>Win</span>`) +
         (game && !locked && nextCall ? `<button type="button" class="cb next go" data-act="next" aria-label="Call the next number">Next${nextTap}</button>` : `<span class="cb next${game && !w ? ' go' : ''}">Next</span>`) +
