@@ -91,6 +91,7 @@
       message: (e && (e.message || String(e))) || 'unknown',
       ts:      Date.now()
     };
+    if (window.Analytics && source !== 'forceShowAd') window.Analytics.adLoadFailed(source, code);   // forceShowAd = debug panel
   }
 
   function showPrivacyOptions() {
