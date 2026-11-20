@@ -119,6 +119,7 @@
       ['Consent status', s.consentInfo
         ? s.consentInfo.status + (s.consentInfo.privacyOptionsRequirementStatus === 'REQUIRED' ? ' (privacy opts required)' : '')
         : '?'],
+      ['Usage stats', (function () { var v = null; try { v = localStorage.getItem('bingoningo_analytics_enabled'); } catch (e) {} return v === '1' ? '✅ on (consented / not required)' : v === '0' ? '❌ off (no consent)' : 'not decided'; })()],
       ['Force test unit', s.forceTestUnit ? '🔀 ON (sample ID)' : 'off (real ID)'],
       ['Ad loaded',     s.adReady     === null ? '?' : (s.adReady     ? '✅ Yes' : '❌ No')],
       ['Preload debounce', s.preloadDebounceMs > 0 ? '⏳ ' + fmtMs(s.preloadDebounceMs) : '✅ Ready'],

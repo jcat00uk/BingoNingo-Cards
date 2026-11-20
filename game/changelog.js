@@ -1,6 +1,18 @@
 window.CHANGELOG = {
 
-  '20261026-171421': {
+  '20261120-061400': {
+    changes: [
+      { tag: 'new', text: 'TV screen — show a big bingo board on a TV for the room: the called numbers, the call words, the last numbers, "Eyes down", the winning card and the between-games screen. Settings ⚙ → 📺 TV screen', editions: 'full' },
+      { tag: 'new', text: 'Plug in a TV with an HDMI or USB-C cable and the board shows on the TV while you keep calling on your phone. Choose whether the voice and ding play on the TV or the phone', editions: 'full' },
+      { tag: 'new', text: 'Smart TV — no cable needed: open bingotv.thecrazycat.com in the TV\'s web browser and enter the code it shows in ⚙ → 📺 TV screen → Smart TV', editions: 'full' },
+      { tag: 'new', text: 'Big Screen mode — a full-screen board with Next, Undo and Check buttons, for Chromecast, Smart View or screen mirroring', editions: 'full' },
+      { tag: 'new', text: 'Choose what the TV shows: call words, last numbers, near-win line, your venue name, the prize, a clock, a "Get BingoNingo" QR code and an optional countdown between games', editions: 'full' },
+      { tag: 'fix', text: 'Pressing Next while the caller was still speaking no longer skips saying the new number', editions: 'full' },
+      { tag: 'fix', text: 'Usage statistics now follow your ad privacy choices (change them any time in Ad preferences)', editions: 'all' }
+    ]
+  },
+
+  '20261026-1712': {
     changes: [
       { tag: 'new', text: 'New "Play with friends" section on the main menu — scan a QR code or share a link to get friends playing on Android', editions: 'all' },
       { tag: 'fix', text: 'Tidier main menu that fits on one screen, with a simpler "How it works" in quick steps', editions: 'all' },

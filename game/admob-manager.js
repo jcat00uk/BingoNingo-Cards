@@ -98,6 +98,11 @@
     var plugin = getPlugin();
     if (!plugin) return;
     plugin.showPrivacyOptionsForm()
+      .then(function() {
+        // The user may have changed their choices: refresh the status, then let usage stats follow
+        return plugin.requestConsentInfo({}).then(function(ci) { if (ci) _consentInfo = ci; }).catch(function() {});
+      })
+      .then(updateAnalyticsConsent)
       .catch(function(e) { console.warn('[AdMobManager] showPrivacyOptionsForm failed:', e); });
   }
 
@@ -184,10 +189,26 @@
       .catch(function(e) {
         console.warn('[AdMobManager] consent info failed:', e);
       })
-      .then(function() {
-        if (window.Analytics) window.Analytics.enable();
-      });
+      .then(updateAnalyticsConsent);
     return _consentPromise;
+  }
+
+  // Usage stats (Firebase Analytics) only with consent where consent is required:
+  //  - UMP says NOT_REQUIRED, or TCF says GDPR doesn't apply -> allowed;
+  //  - otherwise only if TCF purpose 1 ("store and/or access information on a device") was granted;
+  //  - consent step timed out / failed: keep the last decision (Analytics reuses it on load).
+  // TCF values come from the native ConsentPrefs plugin (UMP writes them to the default SharedPreferences).
+  function updateAnalyticsConsent() {
+    if (!window.Analytics || typeof window.Analytics.setAllowed !== 'function') return;
+    var info = _consentInfo;
+    if (!info) return;
+    if (info.status === 'NOT_REQUIRED') { window.Analytics.setAllowed(true); return; }
+    var cp = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ConsentPrefs;
+    if (!cp) { window.Analytics.setAllowed(false); return; }
+    return cp.get().then(function (t) {
+      var allowed = t.gdprApplies === 0 || (t.purposeConsents || '').charAt(0) === '1';
+      window.Analytics.setAllowed(allowed);
+    }).catch(function () { window.Analytics.setAllowed(false); });
   }
 
   function init() {
@@ -289,6 +310,18 @@
     localStorage.setItem(KEY_GAME_START, String(Date.now()));
   }
 
+  // r1 Big Screen mode: the end-of-game ad is held while the phone shows the TV page full screen
+  // (players are watching it), and shown on Exit if it was due and no new game has started.
+  var _adsHeld = false;
+  var _heldAdDue = false;
+  function holdAds(on) {
+    _adsHeld = !!on;
+    if (_adsHeld || !_heldAdDue) return;
+    _heldAdDue = false;
+    if (localStorage.getItem('bingoningo_game_active') === '1') return;   // a new game is running: drop it
+    showIfAllowed();
+  }
+
   // Called from End Game confirm callback only — never during active gameplay.
   // activityCount: calledNumbers.length (caller) or marked cells count (player).
   // Consumes game_start_ts immediately to prevent any reuse.
@@ -304,6 +337,13 @@
     if (!activityCount || activityCount < 1) return;           // nothing happened
     if (!gameStart || (now - gameStart) < MIN_DURATION_MS) return; // < 90s played
 
+    if (_adsHeld) { _heldAdDue = true; return; }   // Big Screen: wait for Exit (holdAds(false))
+    showIfAllowed();
+  }
+
+  // Cooldown + session cap, then show. Split from maybeShowAd so a held ad re-checks them on release.
+  function showIfAllowed() {
+    var now = Date.now();
     // 30-min cooldown between ads
     var lastAd = parseInt(localStorage.getItem(KEY_LAST_AD) || '0', 10);
     if (lastAd && (now - lastAd) < COOLDOWN_MS) return;
@@ -336,6 +376,7 @@
     onEnterGameMode:     onEnterGameMode,
     recordGameStart:     recordGameStart,
     maybeShowAd:         maybeShowAd,
+    holdAds:             holdAds,
     preloadInterstitial: preloadInterstitial,
     showPrivacyOptions:  showPrivacyOptions,
 

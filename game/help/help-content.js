@@ -380,6 +380,20 @@ caller_start: {
     ]
   },
 
+  caller_tv_screen: {
+    title: 'TV Screen',
+    body: [
+      'Shows a big bingo board on a TV for the whole room: the called numbers, the current ball with its call words, the last numbers, wins, "Eyes down" and the between-games screen. You keep calling on your phone as normal.',
+      'Ways to connect (the ones your device supports are listed):'
+    ],
+    list: [
+      '<strong>HDMI / USB-C screen</strong>: plug the phone into the TV. Choose whether sound plays on the TV or the phone.',
+      '<strong>Big Screen mode</strong>: a full-screen board on the phone itself, for Chromecast, Smart View or screen mirroring.',
+      '<strong>Smart TV</strong>: open <strong>bingotv.thecrazycat.com</strong> in the TV\'s web browser and type the code it shows into the box. Sound plays on the phone. The TV reconnects by itself if the connection drops.',
+      '<strong>On screen</strong> switches: choose what the TV shows. Venue and prize show your own text; left blank they show BingoNingo and "Everyone\'s a winner!".'
+    ]
+  },
+
   caller_keep_screen_on: {
     title: 'Keep Screen On',
     body: [
